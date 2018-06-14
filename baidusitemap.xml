@@ -1,0 +1,361 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+
+
+    
+    
+  <url>
+    <loc>http://www.neilron.xyz/choose-offer/</loc>
+    <lastmod>2018-06-14T13:27:38.315Z</lastmod>
+    <data>
+        <display>
+        <title>写在三方即将签约之前</title>
+        <pubTime>2015-11-26T05:59:53.000Z</pubTime>
+        
+        <tag>offer</tag>
+         
+        <tag>网易</tag>
+         
+        <tag>华为</tag>
+         
+        <tag>求职</tag>
+         
+         
+           
+             
+              <breadCrumb title="LIFE" url="http://www.neilron.xyz/categories/LIFE/"/>
+          
+        </display>
+    </data>
+    </url>
+
+    
+  <url>
+    <loc>http://www.neilron.xyz/fail-to-add-into-a-treeset/</loc>
+    <lastmod>2018-06-14T13:27:38.315Z</lastmod>
+    <data>
+        <display>
+        <title>Java中TreeSet的add操作失败的问题</title>
+        <pubTime>2016-10-16T17:17:58.000Z</pubTime>
+        
+        <tag>java</tag>
+         
+        <tag>TreeSet</tag>
+         
+         
+           
+             
+              <breadCrumb title="Java" url="http://www.neilron.xyz/categories/Java/"/>
+          
+        </display>
+    </data>
+    </url>
+
+    
+  <url>
+    <loc>http://www.neilron.xyz/join-in-spark/</loc>
+    <lastmod>2018-06-14T13:27:38.315Z</lastmod>
+    <data>
+        <display>
+        <title>Spark中的Join操作</title>
+        <pubTime>2016-03-27T05:47:43.000Z</pubTime>
+        
+        <tag>join</tag>
+         
+        <tag>spark</tag>
+         
+        <tag>特征工程</tag>
+         
+        <tag>特征提取</tag>
+         
+        <tag>sql</tag>
+         
+        <tag>pairRDD</tag>
+         
+         
+           
+             
+              <breadCrumb title="Spark" url="http://www.neilron.xyz/categories/Spark/"/>
+          
+        </display>
+    </data>
+    </url>
+
+    
+  <url>
+    <loc>http://www.neilron.xyz/linux-bash-getting-started-1/</loc>
+    <lastmod>2018-06-14T13:27:38.315Z</lastmod>
+    <data>
+        <display>
+        <title>Linux复习笔记（一） -- Bash的基本操作</title>
+        <pubTime>2015-06-30T16:00:10.000Z</pubTime>
+        
+        <tag>linux</tag>
+         
+        <tag>bash</tag>
+         
+        <tag>网易云课堂</tag>
+         
+         
+           
+             
+              <breadCrumb title="Linux" url="http://www.neilron.xyz/categories/Linux/"/>
+          
+        </display>
+    </data>
+    </url>
+
+    
+  <url>
+    <loc>http://www.neilron.xyz/linux-bash-getting-started-2/</loc>
+    <lastmod>2018-06-14T13:27:38.315Z</lastmod>
+    <data>
+        <display>
+        <title>Linux复习笔记（二） -- Linux文件系统基本结构和操作</title>
+        <pubTime>2015-07-03T16:00:15.000Z</pubTime>
+        
+        <tag>linux</tag>
+         
+        <tag>bash</tag>
+         
+        <tag>网易云课堂</tag>
+         
+         
+           
+             
+              <breadCrumb title="Linux" url="http://www.neilron.xyz/categories/Linux/"/>
+          
+        </display>
+    </data>
+    </url>
+
+    
+  <url>
+    <loc>http://www.neilron.xyz/mapreduce-extends-configured-implements-tool/</loc>
+    <lastmod>2018-06-14T13:27:38.315Z</lastmod>
+    <data>
+        <display>
+        <title>mapreduce工具类——extends configured implements Tool</title>
+        <pubTime>2016-02-02T15:28:59.000Z</pubTime>
+        
+        <tag>hadoop</tag>
+         
+        <tag>mapreduce</tag>
+         
+        <tag>configured</tag>
+         
+        <tag>tool</tag>
+         
+        <tag>工具类</tag>
+         
+         
+           
+             
+              <breadCrumb title="Hadoop" url="http://www.neilron.xyz/categories/Hadoop/"/>
+          
+        </display>
+    </data>
+    </url>
+
+    
+  <url>
+    <loc>http://www.neilron.xyz/rent-a-vps-on-digitalocean/</loc>
+    <lastmod>2018-06-14T13:27:38.315Z</lastmod>
+    <data>
+        <display>
+        <title>在DigitalOcean租用一台VPS</title>
+        <pubTime>2016-01-15T03:38:37.000Z</pubTime>
+        
+        <tag>VPS</tag>
+         
+        <tag>DigitalOcean</tag>
+         
+        <tag>DO</tag>
+         
+        <tag>Ubuntu</tag>
+         
+         
+           
+             
+              <breadCrumb title="综合" url="http://www.neilron.xyz/categories/%E7%BB%BC%E5%90%88/"/>
+          
+        </display>
+    </data>
+    </url>
+
+    
+  <url>
+    <loc>http://www.neilron.xyz/collaborative-filter/</loc>
+    <lastmod>2018-06-14T13:27:38.315Z</lastmod>
+    <data>
+        <display>
+        <title>协同过滤复习笔记</title>
+        <pubTime>2016-01-18T03:55:20.000Z</pubTime>
+        
+        <tag>Collaborative Filter</tag>
+         
+        <tag>协同过滤</tag>
+         
+        <tag>CF</tag>
+         
+        <tag>推荐系统</tag>
+         
+         
+           
+             
+              <breadCrumb title="数据挖掘" url="http://www.neilron.xyz/categories/%E6%95%B0%E6%8D%AE%E6%8C%96%E6%8E%98/"/>
+          
+        </display>
+    </data>
+    </url>
+
+    
+  <url>
+    <loc>http://www.neilron.xyz/spark-ml-feature-scaler/</loc>
+    <lastmod>2018-06-14T13:27:38.315Z</lastmod>
+    <data>
+        <display>
+        <title>Spark ML包中的几种归一化方法总结</title>
+        <pubTime>2017-07-17T16:10:42.000Z</pubTime>
+        
+        <tag>spark</tag>
+         
+        <tag>归一化</tag>
+         
+        <tag>ml</tag>
+         
+         
+           
+             
+              <breadCrumb title="Spark" url="http://www.neilron.xyz/categories/Spark/"/>
+          
+        </display>
+    </data>
+    </url>
+
+    
+  <url>
+    <loc>http://www.neilron.xyz/stop-docker-series/</loc>
+    <lastmod>2018-06-14T13:27:38.315Z</lastmod>
+    <data>
+        <display>
+        <title>停止更新的tensorflow系列</title>
+        <pubTime>2016-08-07T14:08:32.000Z</pubTime>
+        
+        <tag>linux</tag>
+         
+        <tag>bash</tag>
+         
+        <tag>windows</tag>
+         
+        <tag>tensorflow</tag>
+         
+        <tag>google</tag>
+         
+        <tag>deep learning</tag>
+         
+        <tag>深度学习</tag>
+         
+         
+           
+             
+              <breadCrumb title="DeepLearning" url="http://www.neilron.xyz/categories/DeepLearning/"/>
+          
+        </display>
+    </data>
+    </url>
+
+    
+  <url>
+    <loc>http://www.neilron.xyz/sublime-text-3-run-java-on-windows/</loc>
+    <lastmod>2018-06-14T13:27:38.315Z</lastmod>
+    <data>
+        <display>
+        <title>Sublime Text 3 配置新的Build System一键编译并运行JAVA on Windows</title>
+        <pubTime>2016-02-03T13:47:00.000Z</pubTime>
+        
+        <tag>java</tag>
+         
+        <tag>windows</tag>
+         
+        <tag>sublime Text</tag>
+         
+        <tag>sublime Text 3</tag>
+         
+         
+           
+             
+              <breadCrumb title="碎片知识" url="http://www.neilron.xyz/categories/%E7%A2%8E%E7%89%87%E7%9F%A5%E8%AF%86/"/>
+          
+        </display>
+    </data>
+    </url>
+
+    
+  <url>
+    <loc>http://www.neilron.xyz/set-up-docker-on-windows/</loc>
+    <lastmod>2018-06-14T13:27:38.315Z</lastmod>
+    <data>
+        <display>
+        <title>在Windows上玩TensorFlow(一)——安装Docker</title>
+        <pubTime>2016-05-09T11:52:04.000Z</pubTime>
+        
+        <tag>linux</tag>
+         
+        <tag>windows</tag>
+         
+        <tag>tensorflow</tag>
+         
+        <tag>google</tag>
+         
+        <tag>deep learning</tag>
+         
+        <tag>深度学习</tag>
+         
+        <tag>docker</tag>
+         
+        <tag>virtualbox</tag>
+         
+         
+           
+             
+              <breadCrumb title="Docker" url="http://www.neilron.xyz/categories/Docker/"/>
+          
+        </display>
+    </data>
+    </url>
+
+    
+    
+    
+    
+  <url>
+    <loc>http://www.neilron.xyz/similarity-distance/</loc>
+    <lastmod>2018-06-14T13:27:38.315Z</lastmod>
+    <data>
+        <display>
+        <title>相似性的度量</title>
+        <pubTime>2016-01-26T15:04:55.000Z</pubTime>
+        
+        <tag>协同过滤</tag>
+         
+        <tag>余弦</tag>
+         
+        <tag>cosine</tag>
+         
+        <tag>pearson</tag>
+         
+        <tag>Tanimoto</tag>
+         
+        <tag>相似性</tag>
+         
+         
+           
+             
+              <breadCrumb title="数据挖掘" url="http://www.neilron.xyz/categories/%E6%95%B0%E6%8D%AE%E6%8C%96%E6%8E%98/"/>
+          
+        </display>
+    </data>
+    </url>
+
+</urlset>

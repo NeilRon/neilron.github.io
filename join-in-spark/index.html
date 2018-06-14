@@ -1,0 +1,1734 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=6.3.0" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=6.3.0">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=6.3.0">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=6.3.0">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=6.3.0" color="#222">
+
+
+
+
+
+
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    version: '6.3.0',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":true,"onmobile":false},
+    fancybox: true,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  <meta name="description" content="join操作是在特征提取过程中非常常见的一种需求，从多个不同文件完成了特征提取之后，通过join合并为一个完整的特征，可以方便进行接下来的模型训练、预测等其它操作。 本文将介绍几种Spark中的几种不同的join操作，如果是数据库的朋友可以很容易地把他们与数据库中的几种join联系起来。  join leftOuterJoin rightOuterJoin fullOuterJoin  以上几种都">
+<meta name="keywords" content="join,spark,特征工程,特征提取,sql,pairRDD">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Spark中的Join操作">
+<meta property="og:url" content="http://www.neilron.xyz/join-in-spark/index.html">
+<meta property="og:site_name" content="Ron&#39;s Blog">
+<meta property="og:description" content="join操作是在特征提取过程中非常常见的一种需求，从多个不同文件完成了特征提取之后，通过join合并为一个完整的特征，可以方便进行接下来的模型训练、预测等其它操作。 本文将介绍几种Spark中的几种不同的join操作，如果是数据库的朋友可以很容易地把他们与数据库中的几种join联系起来。  join leftOuterJoin rightOuterJoin fullOuterJoin  以上几种都">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2018-06-14T13:27:38.315Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Spark中的Join操作">
+<meta name="twitter:description" content="join操作是在特征提取过程中非常常见的一种需求，从多个不同文件完成了特征提取之后，通过join合并为一个完整的特征，可以方便进行接下来的模型训练、预测等其它操作。 本文将介绍几种Spark中的几种不同的join操作，如果是数据库的朋友可以很容易地把他们与数据库中的几种join联系起来。  join leftOuterJoin rightOuterJoin fullOuterJoin  以上几种都">
+
+
+
+
+
+
+  <link rel="canonical" href="http://www.neilron.xyz/join-in-spark/"/>
+
+
+
+<script type="text/javascript" id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>Spark中的Join操作 | Ron's Blog</title>
+  
+
+
+
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?29fa61d21a99beb76e78b601a6028c96";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+  <noscript>
+  <style type="text/css">
+    .use-motion .motion-element,
+    .use-motion .brand,
+    .use-motion .menu-item,
+    .sidebar-inner,
+    .use-motion .post-block,
+    .use-motion .pagination,
+    .use-motion .comments,
+    .use-motion .post-header,
+    .use-motion .post-body,
+    .use-motion .collection-title { opacity: initial; }
+
+    .use-motion .logo,
+    .use-motion .site-title,
+    .use-motion .site-subtitle {
+      opacity: initial;
+      top: initial;
+    }
+
+    .use-motion {
+      .logo-line-before i { left: initial; }
+      .logo-line-after i { right: initial; }
+    }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Ron's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+    
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="Toggle navigation bar">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+    <a href="/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-home"></i> <br />Home</a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-categories">
+    <a href="/categories" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-th"></i> <br />Categories</a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+    <a href="/archives" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />Archives</a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-tags">
+    <a href="/tags" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />Tags</a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-about">
+    <a href="/about" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-user"></i> <br />About</a>
+  </li>
+
+      
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />Search</a>
+        </li>
+      
+    </ul>
+  
+
+  
+    
+
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off"
+             placeholder="Searching..." spellcheck="false"
+             type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+  
+
+
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://www.neilron.xyz/join-in-spark/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Neil Ron">
+      <meta itemprop="description" content="众生即前世">
+      <meta itemprop="image" content="http://ww1.sinaimg.cn/large/88b105cdgy1fh3mg3mijvj20e80e8wf5.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Ron's Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">Spark中的Join操作
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+
+              
+                
+              
+
+              <time title="Created: 2016-03-27 13:47:43" itemprop="dateCreated datePublished" datetime="2016-03-27T13:47:43+08:00">2016-03-27</time>
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">In</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/Spark/" itemprop="url" rel="index"><span itemprop="name">Spark</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+            <span class="post-meta-divider">|</span>
+            <span class="post-meta-item-icon"
+            >
+            <i class="fa fa-eye"></i>
+             Views:  
+            <span class="busuanzi-value" id="busuanzi_value_page_pv" ></span>
+            </span>
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>join操作是在特征提取过程中非常常见的一种需求，从多个不同文件完成了特征提取之后，通过join合并为一个完整的特征，可以方便进行接下来的模型训练、预测等其它操作。</p>
+<p>本文将介绍几种Spark中的几种不同的join操作，如果是数据库的朋友可以很容易地把他们与数据库中的几种join联系起来。</p>
+<ul>
+<li>join</li>
+<li>leftOuterJoin</li>
+<li>rightOuterJoin</li>
+<li>fullOuterJoin</li>
+</ul>
+<p>以上几种都是Spark对键值对PairRDD的操作，见<a href="http://spark.apache.org/docs/1.5.2/api/scala/index.html#org.apache.spark.rdd.PairRDDFunctions" target="_blank" rel="noopener">org.apache.spark.rdd.PairRDDFunctions</a></p>
+<h2 id="数据说明"><a href="#数据说明" class="headerlink" title="数据说明"></a>数据说明</h2><p>首先我们准备两份简单的数据，gender和age，其中两张表中的前3条有相同的姓名，后两条不同。</p>
+<table>
+<thead>
+<tr>
+<th>姓名</th>
+<th>性别</th>
+<th></th>
+<th>姓名</th>
+<th>年龄</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Neil</td>
+<td>Male</td>
+<td></td>
+<td>Neil</td>
+<td>25</td>
+</tr>
+<tr>
+<td>Alice</td>
+<td>Female</td>
+<td></td>
+<td>Alice</td>
+<td>18</td>
+</tr>
+<tr>
+<td>Cherry</td>
+<td>Female</td>
+<td></td>
+<td>Cherry</td>
+<td>30</td>
+</tr>
+<tr>
+<td>Harry</td>
+<td>Male</td>
+<td></td>
+<td>Emma</td>
+<td>23</td>
+</tr>
+<tr>
+<td>Kobe</td>
+<td>Male</td>
+<td></td>
+<td>James</td>
+<td>32</td>
+</tr>
+</tbody>
+</table>
+<p>将他们解析为RDD：<br>gender: RDD[(String, String)]<br>age: RDD[(String, String)]</p>
+<h2 id="1-join"><a href="#1-join" class="headerlink" title="1 join"></a>1 join</h2><blockquote>
+<p>定义：join[W](other: RDD[(K, W)]): RDD[(K, (V, W))]<br>Return an RDD containing all pairs of elements with matching keys in this and other.</p>
+</blockquote>
+<p>join函数会输出两个RDD中key相同的所有项，并将它们的value联结起来，它联结的key要求在两个表中都存在，类似于SQL中的INNER JOIN。但它不满足交换律，a.join(b)与b.join(a)的结果不完全相同，值插入的顺序与调用关系有关。</p>
+<p>我们来看上面两个表的例子，</p>
+<h3 id="代码：val-joinThem-gender-join-age"><a href="#代码：val-joinThem-gender-join-age" class="headerlink" title="代码：val joinThem = gender.join(age)"></a>代码：<code>val joinThem = gender.join(age)</code></h3><table>
+<thead>
+<tr>
+<th>1</th>
+<th>2</th>
+<th>3</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Alice</td>
+<td>Female</td>
+<td>18</td>
+</tr>
+<tr>
+<td>Neil</td>
+<td>Male</td>
+<td>25</td>
+</tr>
+<tr>
+<td>Cherry</td>
+<td>Female</td>
+<td>30</td>
+</tr>
+</tbody>
+</table>
+<h3 id="代码：val-joinThem-age-join-gender"><a href="#代码：val-joinThem-age-join-gender" class="headerlink" title="代码：val joinThem = age.join(gender)"></a>代码：<code>val joinThem = age.join(gender)</code></h3><table>
+<thead>
+<tr>
+<th>1</th>
+<th>2</th>
+<th>3</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Alice</td>
+<td>18</td>
+<td>Female</td>
+</tr>
+<tr>
+<td>Neil</td>
+<td>25</td>
+<td>Male</td>
+</tr>
+<tr>
+<td>Cherry</td>
+<td>30</td>
+<td>Female</td>
+</tr>
+</tbody>
+</table>
+<h2 id="2-leftOuterJoin"><a href="#2-leftOuterJoin" class="headerlink" title="2 leftOuterJoin"></a>2 leftOuterJoin</h2><blockquote>
+<p>定义：leftOuterJoin[W](other: RDD[(K, W)]): RDD[(K, (V, Option[W]))]<br>Perform a left outer join of this and other.</p>
+</blockquote>
+<p>leftOuterJoin会保留对象的所有key，而用None填充在参数RDD other中缺失的值，因此调用顺序会使结果完全不同。如下面展示的结果，<br><code>gender.leftOuterJoin(age)</code>会保留gender中的所有key，而<code>age.leftOuterJoin(gender)</code>会保留age中所有的key。</p>
+<h3 id="代码：val-joinThem-gender-leftOuterJoin-age"><a href="#代码：val-joinThem-gender-leftOuterJoin-age" class="headerlink" title="代码：val joinThem = gender.leftOuterJoin(age)"></a>代码：<code>val joinThem = gender.leftOuterJoin(age)</code></h3><table>
+<thead>
+<tr>
+<th>1</th>
+<th>2</th>
+<th>3</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Harry</td>
+<td>Male</td>
+<td>None</td>
+</tr>
+<tr>
+<td>Alice</td>
+<td>Female</td>
+<td>Some(18)</td>
+</tr>
+<tr>
+<td>Neil</td>
+<td>Male</td>
+<td>Some(25)</td>
+</tr>
+<tr>
+<td>Cherry</td>
+<td>Female</td>
+<td>Some(30)</td>
+</tr>
+<tr>
+<td>Kobe</td>
+<td>Male</td>
+<td>None</td>
+</tr>
+</tbody>
+</table>
+<h3 id="代码：val-joinThem-age-leftOuterJoin-gender"><a href="#代码：val-joinThem-age-leftOuterJoin-gender" class="headerlink" title="代码：val joinThem = age.leftOuterJoin(gender)"></a>代码：<code>val joinThem = age.leftOuterJoin(gender)</code></h3><table>
+<thead>
+<tr>
+<th>1</th>
+<th>2</th>
+<th>3</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Emma</td>
+<td>23</td>
+<td>None</td>
+</tr>
+<tr>
+<td>Alice</td>
+<td>18</td>
+<td>Some(Female)</td>
+</tr>
+<tr>
+<td>James</td>
+<td>32</td>
+<td>None</td>
+</tr>
+<tr>
+<td>Neil</td>
+<td>25</td>
+<td>Some(Male)</td>
+</tr>
+<tr>
+<td>Cherry</td>
+<td>30</td>
+<td>Some(Female)</td>
+</tr>
+</tbody>
+</table>
+<p>可以注意到，在结果中左边RDD中的key和value依然是字符串或者整形，而原来在参数表中的值却变成了Some对象或者None对象。</p>
+<h3 id="为什么使用Some？"><a href="#为什么使用Some？" class="headerlink" title="为什么使用Some？"></a>为什么使用Some？</h3><p>Some和None都是Option的子类，它们都是泛型的。<br>在联结过程中，参数表中可能并不存在对象中的所有key，对于不存在的key，如果是直接处理，我们会返回一个null，当处理数据时，我们就需要先判断返回值是否是null，在进行下一步处理。而且稍不注意就会在运行时报出NullPointerException。<br>使用Some，首先告诉开发者，这个值有可能无法返回，然后在处理时，我们可以用一个简单的模式匹配完成处理。假设是对上表中的年龄做处理：</p>
+<figure class="highlight scala"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">ageValue <span class="keyword">match</span> &#123;</span><br><span class="line">	<span class="keyword">case</span> <span class="type">Some</span>(age) =&gt; age.toInt</span><br><span class="line">	<span class="keyword">case</span> <span class="type">None</span> =&gt; &#123;处理年龄值缺失的情况&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="3-rightOuterJoin"><a href="#3-rightOuterJoin" class="headerlink" title="3 rightOuterJoin"></a>3 rightOuterJoin</h2><blockquote>
+<p>定义：rightOuterJoin[W](other: RDD[(K, W)]): RDD[(K, (Option[V], W))]<br>Perform a right outer join of this and other.</p>
+</blockquote>
+<p>rightOuterJoin与leftOuterJoin基本一致，区别在于它的结果保留的是参数other这个RDD中所有的key。</p>
+<h3 id="代码：val-joinThem-gender-rightOuterJoin-age"><a href="#代码：val-joinThem-gender-rightOuterJoin-age" class="headerlink" title="代码：val joinThem = gender.rightOuterJoin(age)"></a>代码：<code>val joinThem = gender.rightOuterJoin(age)</code></h3><table>
+<thead>
+<tr>
+<th>1</th>
+<th>2</th>
+<th>3</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Emma</td>
+<td>None</td>
+<td>23</td>
+</tr>
+<tr>
+<td>Alice</td>
+<td>Some(Female)</td>
+<td>18</td>
+</tr>
+<tr>
+<td>James</td>
+<td>None</td>
+<td>32</td>
+</tr>
+<tr>
+<td>Neil</td>
+<td>Some(Male)</td>
+<td>25</td>
+</tr>
+<tr>
+<td>Cherry</td>
+<td>Some(Female)</td>
+<td>30</td>
+</tr>
+</tbody>
+</table>
+<h3 id="代码：val-joinThem-age-rightOuterJoin-gender"><a href="#代码：val-joinThem-age-rightOuterJoin-gender" class="headerlink" title="代码：val joinThem = age.rightOuterJoin(gender)"></a>代码：<code>val joinThem = age.rightOuterJoin(gender)</code></h3><table>
+<thead>
+<tr>
+<th>1</th>
+<th>2</th>
+<th>3</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Harry</td>
+<td>None</td>
+<td>Male</td>
+</tr>
+<tr>
+<td>Alice</td>
+<td>Some(18)</td>
+<td>Female</td>
+</tr>
+<tr>
+<td>Neil</td>
+<td>Some(25)</td>
+<td>Male</td>
+</tr>
+<tr>
+<td>Cherry</td>
+<td>Some(30)</td>
+<td>Female</td>
+</tr>
+<tr>
+<td>Kobe</td>
+<td>None</td>
+<td>Male</td>
+</tr>
+</tbody>
+</table>
+<h2 id="4-fullOuterJoin"><a href="#4-fullOuterJoin" class="headerlink" title="4 fullOuterJoin"></a>4 fullOuterJoin</h2><blockquote>
+<p>定义：fullOuterJoin[W](other: RDD[(K, W)]): RDD[(K, (Option[V], Option[W]))]<br>Perform a full outer join of this and other.</p>
+</blockquote>
+<p>fullOuterJoin会保留两个RDD中所有的key，因此所有的值列都有可能出现缺失的情况，所有的值列都会转为Some对象。</p>
+<h3 id="代码：val-joinThem-gender-fullOuterJoin-age"><a href="#代码：val-joinThem-gender-fullOuterJoin-age" class="headerlink" title="代码：val joinThem = gender.fullOuterJoin(age)"></a>代码：<code>val joinThem = gender.fullOuterJoin(age)</code></h3><table>
+<thead>
+<tr>
+<th>1</th>
+<th>2</th>
+<th>3</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Harry</td>
+<td>Some(Male)</td>
+<td>None</td>
+</tr>
+<tr>
+<td>Emma</td>
+<td>None</td>
+<td>Some(23)</td>
+</tr>
+<tr>
+<td>Alice</td>
+<td>Some(Female)</td>
+<td>Some(18)</td>
+</tr>
+<tr>
+<td>James</td>
+<td>None</td>
+<td>Some(32)</td>
+</tr>
+<tr>
+<td>Neil</td>
+<td>Some(Male)</td>
+<td>Some(25)</td>
+</tr>
+<tr>
+<td>Cherry</td>
+<td>Some(Female)</td>
+<td>Some(30)</td>
+</tr>
+<tr>
+<td>Kobe</td>
+<td>Some(Male)</td>
+<td>None</td>
+</tr>
+</tbody>
+</table>
+<h3 id="代码：val-joinThem-age-fullOuterJoin-gender"><a href="#代码：val-joinThem-age-fullOuterJoin-gender" class="headerlink" title="代码：val joinThem = age.fullOuterJoin(gender)"></a>代码：<code>val joinThem = age.fullOuterJoin(gender)</code></h3><table>
+<thead>
+<tr>
+<th>1</th>
+<th>2</th>
+<th>3</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Harry</td>
+<td>None</td>
+<td>Some(Male)</td>
+</tr>
+<tr>
+<td>Emma</td>
+<td>Some(23)</td>
+<td>None</td>
+</tr>
+<tr>
+<td>Alice</td>
+<td>Some(18)</td>
+<td>Some(Female)</td>
+</tr>
+<tr>
+<td>James</td>
+<td>Some(32)</td>
+<td>None</td>
+</tr>
+<tr>
+<td>Neil</td>
+<td>Some(25)</td>
+<td>Some(Male)</td>
+</tr>
+<tr>
+<td>Cherry</td>
+<td>Some(30)</td>
+<td>Some(Female)</td>
+</tr>
+<tr>
+<td>Kobe</td>
+<td>None</td>
+<td>Some(Male)</td>
+</tr>
+</tbody>
+</table>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>spark中实现了以上4种join操作，基本可以为特征处理时所需的大部分情况提供支持，目前只支持两个RDD的联结，如需多个联结可调用多次。还想了解更多的细节，可以查看以上四种join的<a href="https://github.com/apache/spark/blob/master/core/src/main/scala/org/apache/spark/rdd/PairRDDFunctions.scala" target="_blank" rel="noopener">源码github地址</a></p>
+
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+      <div>
+        <ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>Post author:  </strong>Neil Ron</li>
+  <li class="post-copyright-link">
+    <strong>Post link: </strong>
+    <a href="http://www.neilron.xyz/join-in-spark/" title="Spark中的Join操作">http://www.neilron.xyz/join-in-spark/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>Copyright Notice:  </strong>All articles in this blog are licensed under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="external nofollow" target="_blank">CC BY-NC-SA 4.0</a> unless stating additionally.</li>
+</ul>
+
+      </div>
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/join/" rel="tag"># join</a>
+          
+            <a href="/tags/spark/" rel="tag"># spark</a>
+          
+            <a href="/tags/特征工程/" rel="tag"># 特征工程</a>
+          
+            <a href="/tags/特征提取/" rel="tag"># 特征提取</a>
+          
+            <a href="/tags/sql/" rel="tag"># sql</a>
+          
+            <a href="/tags/pairRDD/" rel="tag"># pairRDD</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/sublime-text-3-run-java-on-windows/" rel="next" title="Sublime Text 3 配置新的Build System一键编译并运行JAVA on Windows">
+                <i class="fa fa-chevron-left"></i> Sublime Text 3 配置新的Build System一键编译并运行JAVA on Windows
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/set-up-docker-on-windows/" rel="prev" title="在Windows上玩TensorFlow(一)——安装Docker">
+                在Windows上玩TensorFlow(一)——安装Docker <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            Table of Contents
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            Overview
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="http://ww1.sinaimg.cn/large/88b105cdgy1fh3mg3mijvj20e80e8wf5.jpg"
+                alt="Neil Ron" />
+            
+              <p class="site-author-name" itemprop="name">Neil Ron</p>
+              <p class="site-description motion-element" itemprop="description">众生即前世</p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives">
+                
+                    <span class="site-state-item-count">13</span>
+                    <span class="site-state-item-name">posts</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  <a href="/categories/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">10</span>
+                    <span class="site-state-item-name">categories</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  <a href="/tags/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">44</span>
+                    <span class="site-state-item-name">tags</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+            <div class="links-of-author motion-element">
+              
+                <span class="links-of-author-item">
+                  <a href="https://github.com/NeilRon" target="_blank" title="GitHub"><i class="fa fa-fw fa-github"></i>GitHub</a>
+                  
+                </span>
+              
+            </div>
+          
+
+          
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#数据说明"><span class="nav-text">数据说明</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#1-join"><span class="nav-text">1 join</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#代码：val-joinThem-gender-join-age"><span class="nav-text">代码：val joinThem = gender.join(age)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#代码：val-joinThem-age-join-gender"><span class="nav-text">代码：val joinThem = age.join(gender)</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-leftOuterJoin"><span class="nav-text">2 leftOuterJoin</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#代码：val-joinThem-gender-leftOuterJoin-age"><span class="nav-text">代码：val joinThem = gender.leftOuterJoin(age)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#代码：val-joinThem-age-leftOuterJoin-gender"><span class="nav-text">代码：val joinThem = age.leftOuterJoin(gender)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#为什么使用Some？"><span class="nav-text">为什么使用Some？</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-rightOuterJoin"><span class="nav-text">3 rightOuterJoin</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#代码：val-joinThem-gender-rightOuterJoin-age"><span class="nav-text">代码：val joinThem = gender.rightOuterJoin(age)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#代码：val-joinThem-age-rightOuterJoin-gender"><span class="nav-text">代码：val joinThem = age.rightOuterJoin(gender)</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#4-fullOuterJoin"><span class="nav-text">4 fullOuterJoin</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#代码：val-joinThem-gender-fullOuterJoin-age"><span class="nav-text">代码：val joinThem = gender.fullOuterJoin(age)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#代码：val-joinThem-age-fullOuterJoin-gender"><span class="nav-text">代码：val joinThem = age.fullOuterJoin(gender)</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#总结"><span class="nav-text">总结</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; 2016 &mdash; <span itemprop="copyrightYear">2018</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">true</span>
+
+  
+
+  
+</div>
+
+
+
+
+  <div class="powered-by">Powered by <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> v3.7.1</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">Theme &mdash; <a class="theme-link" target="_blank" href="https://github.com/theme-next/hexo-theme-next">NexT.Mist</a> v6.3.0</div>
+
+
+
+
+        
+<div class="busuanzi-count">
+  <script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+  
+    <span class="site-uv" title="Total Visitors">
+      <i class="fa fa-user"></i>
+      <span class="busuanzi-value" id="busuanzi_value_site_uv"></span>
+    </span>
+  
+
+  
+    <span class="site-pv" title="Total Views">
+      <i class="fa fa-eye"></i>
+      <span class="busuanzi-value" id="busuanzi_value_site_pv"></span>
+    </span>
+  
+</div>
+
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+          <span id="scrollpercent"><span>0</span>%</span>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/canvas-nest/canvas-nest.min.js"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=6.3.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=6.3.0"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=6.3.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=6.3.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=6.3.0"></script>
+
+
+
+  
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+  
+
+  
+    
+      <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        inlineMath: [ ['$','$'], ["\\(","\\)"]  ],
+        processEscapes: true,
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      },
+      TeX: {equationNumbers: { autoNumber: "AMS" }}
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+      var all = MathJax.Hub.getAllJax(), i;
+        for (i=0; i < all.length; i += 1) {
+          all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+<script type="text/javascript" src="//cdn.bootcss.com/mathjax/2.7.1/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+    
+  
+
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

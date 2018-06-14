@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="utf-8"?>
+<search>
+  <entry>
+    <title><![CDATA[Spark ML包中的几种归一化方法总结]]></title>
+    <url>%2Fspark-ml-feature-scaler%2F</url>
+    <content type="text"><![CDATA[org.apache.spark.ml.feature包中包含了4种不同的归一化方法： Normalizer StandardScaler MinMaxScaler MaxAbsScaler 有时感觉会容易混淆，借助官方文档和实际数据的变换，在这里做一次总结。 原文地址：http://www.neilron.xyz/spark-ml-feature-scaler/ 0 数据准备123456789101112131415161718import org.apache.spark.ml.linalg.Vectorsval dataFrame = spark.createDataFrame(Seq( (0, Vectors.dense(1.0, 0.5, -1.0)), (1, Vectors.dense(2.0, 1.0, 1.0)), (2, Vectors.dense(4.0, 10.0, 2.0)))).toDF(&quot;id&quot;, &quot;features&quot;)dataFrame.show// 原始数据+---+--------------+| id| features|+---+--------------+| 0|[1.0,0.5,-1.0]|| 1| [2.0,1.0,1.0]|| 2|[4.0,10.0,2.0]|+---+--------------+ 1 NormalizerNormalizer的作用范围是每一行，使每一个行向量的范数变换为一个单位范数，下面的示例代码都来自spark官方文档加上少量改写和注释。12345678910111213141516171819202122232425262728293031323334import org.apache.spark.ml.feature.Normalizer// 正则化每个向量到1阶范数val normalizer = new Normalizer() .setInputCol(&quot;features&quot;) .setOutputCol(&quot;normFeatures&quot;) .setP(1.0)val l1NormData = normalizer.transform(dataFrame)println(&quot;Normalized using L^1 norm&quot;)l1NormData.show()// 将每一行的规整为1阶范数为1的向量，1阶范数即所有值绝对值之和。+---+--------------+------------------+| id| features| normFeatures|+---+--------------+------------------+| 0|[1.0,0.5,-1.0]| [0.4,0.2,-0.4]|| 1| [2.0,1.0,1.0]| [0.5,0.25,0.25]|| 2|[4.0,10.0,2.0]|[0.25,0.625,0.125]|+---+--------------+------------------+// 正则化每个向量到无穷阶范数val lInfNormData = normalizer.transform(dataFrame, normalizer.p -&gt; Double.PositiveInfinity)println(&quot;Normalized using L^inf norm&quot;)lInfNormData.show()// 向量的无穷阶范数即向量中所有值中的最大值+---+--------------+--------------+| id| features| normFeatures|+---+--------------+--------------+| 0|[1.0,0.5,-1.0]|[1.0,0.5,-1.0]|| 1| [2.0,1.0,1.0]| [1.0,0.5,0.5]|| 2|[4.0,10.0,2.0]| [0.4,1.0,0.2]|+---+--------------+--------------+ 2 StandardScalerStandardScaler处理的对象是每一列，也就是每一维特征，将特征标准化为单位标准差或是0均值，或是0均值单位标准差。主要有两个参数可以设置： withStd: 默认为真。将数据标准化到单位标准差。 withMean: 默认为假。是否变换为0均值。 StandardScaler需要fit数据，获取每一维的均值和标准差，来缩放每一维特征。1234567891011121314151617181920212223import org.apache.spark.ml.feature.StandardScalerval scaler = new StandardScaler() .setInputCol(&quot;features&quot;) .setOutputCol(&quot;scaledFeatures&quot;) .setWithStd(true) .setWithMean(false)// Compute summary statistics by fitting the StandardScaler.val scalerModel = scaler.fit(dataFrame)// Normalize each feature to have unit standard deviation.val scaledData = scalerModel.transform(dataFrame)scaledData.show// 将每一列的标准差缩放到1。+---+--------------+------------------------------------------------------------+|id |features |scaledFeatures |+---+--------------+------------------------------------------------------------+|0 |[1.0,0.5,-1.0]|[0.6546536707079772,0.09352195295828244,-0.6546536707079771]||1 |[2.0,1.0,1.0] |[1.3093073414159544,0.1870439059165649,0.6546536707079771] ||2 |[4.0,10.0,2.0]|[2.618614682831909,1.870439059165649,1.3093073414159542] |+---+--------------+------------------------------------------------------------+ 3 MinMaxScalerMinMaxScaler作用同样是每一列，即每一维特征。将每一维特征线性地映射到指定的区间，通常是[0, 1]。它也有两个参数可以设置： min: 默认为0。指定区间的下限。 max: 默认为1。指定区间的上限。 12345678910111213141516171819202122import org.apache.spark.ml.feature.MinMaxScalerval scaler = new MinMaxScaler() .setInputCol(&quot;features&quot;) .setOutputCol(&quot;scaledFeatures&quot;)// Compute summary statistics and generate MinMaxScalerModelval scalerModel = scaler.fit(dataFrame)// rescale each feature to range [min, max].val scaledData = scalerModel.transform(dataFrame)println(s&quot;Features scaled to range: [$&#123;scaler.getMin&#125;, $&#123;scaler.getMax&#125;]&quot;)scaledData.select(&quot;features&quot;, &quot;scaledFeatures&quot;).show// 每维特征线性地映射，最小值映射到0，最大值映射到1。+--------------+-----------------------------------------------------------+|features |scaledFeatures |+--------------+-----------------------------------------------------------+|[1.0,0.5,-1.0]|[0.0,0.0,0.0] ||[2.0,1.0,1.0] |[0.3333333333333333,0.05263157894736842,0.6666666666666666]||[4.0,10.0,2.0]|[1.0,1.0,1.0] |+--------------+-----------------------------------------------------------+ 4 MaxAbsScalerMaxAbsScaler将每一维的特征变换到[-1, 1]闭区间上，通过除以每一维特征上的最大的绝对值，它不会平移整个分布，也不会破坏原来每一个特征向量的稀疏性。123456789101112131415161718192021import org.apache.spark.ml.feature.MaxAbsScalerval scaler = new MaxAbsScaler() .setInputCol(&quot;features&quot;) .setOutputCol(&quot;scaledFeatures&quot;)// Compute summary statistics and generate MaxAbsScalerModelval scalerModel = scaler.fit(dataFrame)// rescale each feature to range [-1, 1]val scaledData = scalerModel.transform(dataFrame)scaledData.select(&quot;features&quot;, &quot;scaledFeatures&quot;).show()// 每一维的绝对值的最大值为[4, 10, 2]+--------------+----------------+ | features| scaledFeatures|+--------------+----------------+|[1.0,0.5,-1.0]|[0.25,0.05,-0.5]|| [2.0,1.0,1.0]| [0.5,0.1,0.5]||[4.0,10.0,2.0]| [1.0,1.0,1.0]|+--------------+----------------+ 总结所有4种归一化方法都是线性的变换，当某一维特征上具有非线性的分布时，还需要配合其它的特征预处理方法。]]></content>
+      <categories>
+        <category>Spark</category>
+      </categories>
+      <tags>
+        <tag>spark</tag>
+        <tag>归一化</tag>
+        <tag>ml</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title><![CDATA[Java中TreeSet的add操作失败的问题]]></title>
+    <url>%2Ffail-to-add-into-a-treeset%2F</url>
+    <content type="text"><![CDATA[欢迎转载，转载请在醒目处注明出处，Ron’s Blog: http://www.neilron.xyz/fail-to-add-into-a-treeset/ 最近在工作中碰到一个问题，经过一行行debug最终定位到了是一个TreeSet无法add新条目的问题。 Google一番发现了TreeSet和HashSet用法有些不同，不仅不能插入Hash相同的对象，也不能插入在排序中和已有元素等价的值。 下面写了一个简单的测试例，来更形象的说明这个现象。 首先定义一个Song类，只有两个属性，歌名和评分，重写了hashCode和toString方法，Hash值只和歌名有关初始化一首歌时赋值默认分数是3分。然后按照得分高低有序地插入到一个新的TreeSet中。 123456789101112131415161718192021222324252627282930class Song &#123; private String name; private int score; Song(String name) &#123; this.name = name; this.score = 3; &#125; void setScore(int score) &#123; this.score = score; &#125; int getScore() &#123; return score; &#125; @Override public int hashCode() &#123; return new HashCodeBuilder(17, 37) .append(this.name) .toHashCode(); &#125; @Override public String toString() &#123; return String.format("%s\t%d", this.name, this.score); &#125;&#125; 接下来在主函数中，初始化一个普通的HashSet和一个按分数降序排列的TreeSet，初始化两首周董的新单，注意这里初始化之后两首单曲的分数是一样的。 1234567891011121314HashSet&lt;Song&gt; hashSet = new HashSet&lt;Song&gt;();TreeSet&lt;Song&gt; treeSet = new TreeSet&lt;Song&gt;(new Comparator&lt;Song&gt;() &#123; public int compare(Song o1, Song o2) &#123; return o2.getScore() - o1.getScore(); &#125;&#125;);Song song1 = new Song("前世情人");Song song2 = new Song("床边故事");treeSet.add(song1);treeSet.add(song2);hashSet.add(song1);hashSet.add(song2); 查看一下结果123456789System.out.println("TreeSet Result:");for (Song song : treeSet)&#123; System.out.println(song);&#125;System.out.println("\nHashSet Result:");for (Song song : hashSet)&#123; System.out.println(song);&#125; 上面这段代码最后输出的结果是123456TreeSet Result:前世情人 3HashSet Result:前世情人 3床边故事 3 HashSet成功地插入了两首歌，因为song1和song2的Hash值显然不同，而在TreeSet中，第二首歌《床边故事》没有被成功插入，原因就是，TreeSet不光会拒绝Hash值相同的对象，也会拒绝被自己的比较器认为是相通的对象，这里也就是两首歌的评分。 下面我们给其中一首歌重新评分，再次插入，并输出结果。 12345678song2.setScore(4);treeSet.add(song2);System.out.println("\nTreeSet Result After setScore:");for (Song song : treeSet)&#123; System.out.println(song);&#125; 123TreeSet Result After setScore:前世情人 4床边故事 3 这一次，《床边故事》也成功插入了。 总结：初始化对象时经常会赋予一些相同的属性值，再插入TreeSet前请保证它们在TreeSet的比较器中都是不等的，否则插入会失败。虽然是小问题，但这种问题有时候要靠调试来发现还是很麻烦的。 以上全部源码请查看：https://github.com/NeilRon/FreeTest/blob/master/src/main/java/xyz/neilron/freetest/TreeSetTest.java]]></content>
+      <categories>
+        <category>Java</category>
+      </categories>
+      <tags>
+        <tag>java</tag>
+        <tag>TreeSet</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title><![CDATA[停止更新的tensorflow系列]]></title>
+    <url>%2Fstop-docker-series%2F</url>
+    <content type="text"><![CDATA[没想到想写3篇的tensorflow系列才配置了docker就夭折了，原因是后面实验的内容和工作比较相关，就不方便公开了，而一般的实战例子的话，官网的教程用MNIST已经很好了。 安利两个可能有用的资源 Windows Subsystem for Linux(WSL)真的还蛮好用的现在我自己用这个代替了docker，个人感觉是Windows 10周年更新里最重要的内容了，Windows内核里编译进了Canonical提供的ubuntu源码，然后就可以原生地运行一个linux环境了。当然也可以运行tensorflow(CUDA版本还不行，不过相信也会实现的)，CPU-ONLY版本的话，打开bash（怎样开启windows的bash可以自行搜索，要求周年更新之后的win10版本），按着virtualenv安装tensorflow中当ubuntu64位安装就行。 Udacity课程TensorFlow MOOCtensorflow的github页面最下面给出的深度学习的入门教程TensorFlow MOOC on Udacity，我是觉得讲得很清楚，就是讲师的讲课风格稍微有点夸张…]]></content>
+      <categories>
+        <category>DeepLearning</category>
+      </categories>
+      <tags>
+        <tag>linux</tag>
+        <tag>bash</tag>
+        <tag>windows</tag>
+        <tag>tensorflow</tag>
+        <tag>google</tag>
+        <tag>deep learning</tag>
+        <tag>深度学习</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title><![CDATA[在Windows上玩TensorFlow(一)——安装Docker]]></title>
+    <url>%2Fset-up-docker-on-windows%2F</url>
+    <content type="text"><![CDATA[欢迎转载，转载请在醒目处注明出处，Ron’s Blog: http://www.neilron.xyz/set-up-docker-on-windows/ “谷歌”+“深度学习”，两个标签让2015年12月才由谷歌开源的深度学习工具TensorFlow在其发布之后就迅速地成为了全球最为炙手可热的开源项目，2016年4月，开源的TensorFlow又支持了分布式特性，向着生产环境下的应用更进一步。 TensorFlow API支持Python 2.7和Python 3.3+，共支持4种安装方式。 Pip install Virtualenv install Anaconda install Docker install 其中大部分支持Linux和Mac OS，由于主要开发环境是Windows，我选择了最为灵活的docker方式安装TensorFlow。TensorFlow还有GPU支持版本，本文仅探索CPU-Only版本。 我计划完成一系列3篇博文，第一步安装docker，第二步单机版TensorFlow的Demo，第三步分布式TensorFlow的Demo，争取在1个月内完成。 1 Docker是什么？借用Docker官网最大的一行字。 Docker allows you to package an application with all of its dependencies into a standardized unit for software development. 从功能上讲，Docker也可以理解为一种虚拟化的方案，可以通过构建包含不同软件的镜像，来达到快速部署开发环境的目的。 再借用官网的一张图，左边蓝色的部分从kernel开始一层层加了debian, emacs, apache形成了一个Image，每一层都是只读的，我们运行这个Image的时候，上面盖上了一层可读写的Container，让我们做一些编辑和修改，一个简单的服务器就可以用了；又如右边橘红色的部分，Kernel的上面加上了BusyBox就形成了Image，运行起来之后就可以以非常轻量级的方式运行起busybox中支持的命令。再有我们接下来要学习的TensorFlow镜像，就包含了运行它所需要的全部依赖，简单操作就可以完成TensorFlow开发环境的搭建。 更多的Docker理解推荐阅读10张图带你深入理解Docker容器和镜像 2 安装Docker要在Windows上运行Docker，首先需要下载和安装Docker Toolbox。顺便奉上Docker Windows文档，更喜欢官方文档的话可以看这里，也可以按照本文的步骤继续。 2.1 确认系统版本首先确认自己的系统是WIN 7或更新的64位系统，且需要支持硬件虚拟化技术。 Win 8及以上查看方法： Win 7查看方法Win 7 运行Microsoft® Hardware-Assisted Virtualization Detection Tool这一工具执行检查。 完成之后就可以继续下一步了。 2.2 安装Docker Toolbox点击Docker Toolbox下载，在本文写作时的最新版本为1.11.1,。安装过程会安装Docker的各个组件和Oracle VirtualBox，因为Docker需要依赖Linux内核的一些特性，因此Mac和Windows都需要在机器上运行一个小型的Linux系统作为Host系统。如果已经安装过VirtualBox的最新版本，则无需重新安装。 自行选择安装路径，如果已经安装过Git也可以去掉该工具的勾选，VirtualBox也是一样，其它可一路Next。 2.3 配置Docker安装完成后，建议先配置一个环境变量MACHINE_STORAGE_PATH，来自定义虚拟机保存的位置，因为之后下载的镜像越来越多，都是放在虚拟机的虚拟磁盘文件中，虚拟磁盘文件会越来越大，放在默认的C盘用户目录下可能会在以后造成一些麻烦，参考下图，设置为任意你喜欢的位置。 设置完成之后，WIN+R键输入cmd，打开一个windows命令行窗口。 输入下面的命令新建一个虚拟机ron-docker，使用virtualbox作为driver，这个虚拟机会自动创建在你的MACHINE_STORAGE_PATH配置的目录中，安装过程会从github上拉取boot2docker.iso，可能会比较慢，可以手动下载，也可以直接将toolbox安装目录下的boot2docker.iso复制到%MACHINE_STORAGE_PATH%/cache中。 1docker-machine create ron-docker -d virtualbox 还要注意过程中可能会出现一些要求Windows执行权限的窗口，有些会最小化在任务栏上，请一一赋予权限。 建立完成之后键入docker-machine ls查看刚刚新建的虚拟机，下面的命令都会以ron-docker为例，读者请按照自己的配置修改。 123C:\Users\ron&gt;docker-machine lsNAME ACTIVE DRIVER STATE URL SWARM DOCKER ERRORSron-docker - virtualbox Running tcp://192.168.99.100:2376 v1.11.1 这时候我们使用的CMD还不能与Docker Engine建立连接，可以通过docker-machine env mydocker查看如何设置。 1234567C:\Users\ron&gt;docker-machine env ron-dockerSET DOCKER_TLS_VERIFY=1SET DOCKER_HOST=tcp://192.168.99.100:2376SET DOCKER_CERT_PATH=E:\VirtualBox VM\machines\ron-dockerSET DOCKER_MACHINE_NAME=ron-dockerREM Run this command to configure your shell:REM @FOR /f "tokens=*" %i IN ('docker-machine env ron-docker') DO @%i 键入下面的命令完成环境变量配置 1FOR /F "tokens=*" %i IN ('docker-machine env ron-docker') DO %i 3 运行镜像下面我们下载最新的TensorFlow镜像来体验一下在docker下运行镜像。 3.1 下载镜像12345docker pull gcr.io/tensorflow/tensorflowdocker imagesREPOSITORY TAG IMAGE ID CREATED SIZEgcr.io/tensorflow/tensorflow latest aeff5a9860a3 2 weeks ago 714.2 MB 当然有可能有网络问题，请根据自己的具体状况自行解决，挂代理，VPN，手动下载都可以。 3.2 启动镜像和探索使用下面的命令启动镜像。 1docker run -it gcr.io/tensorflow/tensorflow bash 选项-i用于保持STDIN在当前的窗口上，-t用于分配一个pesudo-tty，两个选项使得当前的窗口可以像一个linux的bash一样运行，丝毫没有违和感。第一个参数指定了使用的镜像，第二个参数指定了启动这个镜像后启用的命令，用bash启动方便我们开始第一次的探索。 uname -a，查看信息 cd到/目录下，查看目录结构 运行tensorflow的hello world 12345678910111213141516171819root@ec9bfd276082:/# uname -aLinux ec9bfd276082 4.4.8-boot2docker #1 SMP Mon Apr 25 21:57:27 UTC 2016 x86_64 x86_64 x86_64 GNU/Linuxroot@ec9bfd276082:/# ls /bin dev home lib64 mnt opt root run_jupyter.sh srv tmp varboot etc lib media notebooks proc run sbin sys usrroot@ec9bfd276082:/# pythonPython 2.7.6 (default, Jun 22 2015, 17:58:13)[GCC 4.8.2] on linux2Type "help", "copyright", "credits" or "license" for more information.&gt;&gt;&gt; import tensorflow as tf&gt;&gt;&gt; hello = tf.constant('Hello, TensorFlow!')&gt;&gt;&gt; sess =tf.Session()&gt;&gt;&gt; sess.run(hello)'Hello, TensorFlow!'&gt;&gt;&gt; a = tf.constant(10)&gt;&gt;&gt; b = tf.constant(32)&gt;&gt;&gt; sess.run(a+b)42&gt;&gt;&gt; 注意到/目录下的run_jupyter.sh，这事实上是当前版本tensorflow启动的默认命令，也就是说，如果我们在启动镜像时没有指定bash，就会默认运行这个脚本，这与一些稍早一些版本的tensorflow不同，许多教程中也还没有提到，可能会造成困惑，读者可以尝试一下docker run -it gcr.io/tensorflow/tensorflow，它会启动一个notebook的服务，运行在本地的8888端口上，但这样就想从windows的浏览器上打开notebook是不行的，这与docker本身的机制和运行在虚拟上两个原因有关，如果读者现在就想看到notebook，点击这里立即带你去到完成更多必要配置的端口转发部分。 4 配置自己的快速启动窗口回顾一下上面的过程，要将一个Windows的CMD窗口变为一个运行特定容器的窗口，需要3步。 启动虚拟机 配置虚拟机对应的环境变量 运行镜像 下面我自己用的一个启动脚本，需要的话仅需修改相应的machine-name，然后将脚本保存为my-start.bat，放在toolbox安装目录下。之后右键my-start.bat-&gt;发送到桌面快捷方式，按代码下的图配置该快捷方式，/K参数可以使bat运行完之后不自动关闭。这样，需要时双击运行就可以获得一个新的可运行镜像的CMD窗口。 12345678910111213141516171819@ECHO offSET machine-name=ron-dockerECHO Init...FOR /F %%i IN ('docker-machine status %machine-name%') DO SET status=%%iIF %status%==Running ( ECHO %machine-name% is running.) ELSE ( ECHO %machine-name% is shutdown. docker-machine start %machine-name%)ECHO Configuring Environment...FOR /F "tokens=*" %%i IN ('docker-machine env %machine-name%') DO %%iECHO Init Finished. 5 完成更多必要配置上面我们完成了镜像从下载到启动的过程，但在将docker用作开发环境之前，还有一些很有必要的配置工作要做，让我们一起来完成下面3步。 5.1 端口转发我们的容器运行在一个小的linux虚拟机上，而虚拟机又运行在Windows系统的VirtualBox上，自然的，运行在容器上的服务不能在Windows上打开浏览器直接访问。端口转发就是要解决这个问题，共有两步： 建立Windows和虚拟机之间的端口转发可以通过VirtualBox的管理界面完成，如图，然后重启虚拟机。 配置虚拟机和容器之间的端口转发使用-p选项 1docker run -it -p 8888:8888 gcr.io/tensorflow/tensorflow 键入上面这条命令之后打开浏览器，访问localhost:8888，看到运行在容器中的notebook服务了吧 5.2 磁盘映射磁盘映射是非常有用的一步配置，可以将Windows上的磁盘直接映射到容器中，这样在Windows上开发代码，直接在容器中运行，避免了写完复制的大麻烦。磁盘映射的处理方法与端口转发类似，磁盘的映射关系需要完成Windwos到虚拟机，虚拟机到容器的两步配置，请跟随下面3个步骤： 建立Windows和虚拟机之间的磁盘映射打开虚拟机的设置页面后，在共享文件夹中设置你想要共享的文件夹和它的名称，如图，重启虚拟机。 在虚拟机中挂载磁盘这一步要用到刚才设置的名称，我这里就是docker。 12mkdir -p /home/docker/datamount -t vboxsf -o uid=1000,gid=50 docker /home/docker/data 到这里，我们在Windows中所做的修改就可以实时地反映到虚拟机中了。 建立虚拟机和容器之间的磁盘映射使用-v选项，建立两个目录的映射关系 1docker run -it -v /home/docker/data:/data gcr.io/tensorflow/tensorflow bash 好了，试试在Windows的共享文件夹中添加一个python的hello world，然后在docker中python /data/hello.py试试吧 5.3 配置启动脚本我们上面用docker-machine创建的虚拟机，它的大部分目录在重启之后都会复原，除了/mnt/sda1，这个目录也就是虚拟机的虚拟磁盘文件disk.vmdk所挂载的位置，我们可以修改里面的/mnt/sda1/var/lib/boot2docker/profile文件，在文件最后添加我们自定义的启动命令，比如说添加前面的磁盘映射，就是在profile文件最后加上下面这两句。 12mkdir -p /home/docker/datamount -t vboxsf -o uid=1000,gid=50 docker /home/docker/data 这样每次虚拟机启动就会完成磁盘的挂载了。 6 结语到这里，使用tensorflow之前安装docker的工作我尽己所能最详细地描述了，读者您如果能看到这里，我真的感到非常荣幸，第一次写这么长的教程，希望能带来一些帮助，最后，感谢下面参考资料的贡献者们，请期待tensorflow三部曲第二篇吧~ 7 参考资料 利用Docker构建开发环境：http://tech.uc.cn/?p=2726 10张图带你深入理解Docker容器和镜像：http://dockone.io/article/783 How to install and run TensorFlow on a Windows PC: http://www.netinstructions.com/how-to-install-and-run-tensorflow-on-a-windows-pc/ Install Docker for Windows: https://docs.docker.com/windows/ 5 Useful Docker Tips and Tricks on Windows：http://blog.pavelsklenar.com/5-useful-docker-tip-and-tricks-on-windows/]]></content>
+      <categories>
+        <category>Docker</category>
+      </categories>
+      <tags>
+        <tag>linux</tag>
+        <tag>windows</tag>
+        <tag>tensorflow</tag>
+        <tag>google</tag>
+        <tag>deep learning</tag>
+        <tag>深度学习</tag>
+        <tag>docker</tag>
+        <tag>virtualbox</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title><![CDATA[Spark中的Join操作]]></title>
+    <url>%2Fjoin-in-spark%2F</url>
+    <content type="text"><![CDATA[join操作是在特征提取过程中非常常见的一种需求，从多个不同文件完成了特征提取之后，通过join合并为一个完整的特征，可以方便进行接下来的模型训练、预测等其它操作。 本文将介绍几种Spark中的几种不同的join操作，如果是数据库的朋友可以很容易地把他们与数据库中的几种join联系起来。 join leftOuterJoin rightOuterJoin fullOuterJoin 以上几种都是Spark对键值对PairRDD的操作，见org.apache.spark.rdd.PairRDDFunctions 数据说明首先我们准备两份简单的数据，gender和age，其中两张表中的前3条有相同的姓名，后两条不同。 姓名 性别 姓名 年龄 Neil Male Neil 25 Alice Female Alice 18 Cherry Female Cherry 30 Harry Male Emma 23 Kobe Male James 32 将他们解析为RDD：gender: RDD[(String, String)]age: RDD[(String, String)] 1 join 定义：join[W](other: RDD[(K, W)]): RDD[(K, (V, W))]Return an RDD containing all pairs of elements with matching keys in this and other. join函数会输出两个RDD中key相同的所有项，并将它们的value联结起来，它联结的key要求在两个表中都存在，类似于SQL中的INNER JOIN。但它不满足交换律，a.join(b)与b.join(a)的结果不完全相同，值插入的顺序与调用关系有关。 我们来看上面两个表的例子， 代码：val joinThem = gender.join(age) 1 2 3 Alice Female 18 Neil Male 25 Cherry Female 30 代码：val joinThem = age.join(gender) 1 2 3 Alice 18 Female Neil 25 Male Cherry 30 Female 2 leftOuterJoin 定义：leftOuterJoin[W](other: RDD[(K, W)]): RDD[(K, (V, Option[W]))]Perform a left outer join of this and other. leftOuterJoin会保留对象的所有key，而用None填充在参数RDD other中缺失的值，因此调用顺序会使结果完全不同。如下面展示的结果，gender.leftOuterJoin(age)会保留gender中的所有key，而age.leftOuterJoin(gender)会保留age中所有的key。 代码：val joinThem = gender.leftOuterJoin(age) 1 2 3 Harry Male None Alice Female Some(18) Neil Male Some(25) Cherry Female Some(30) Kobe Male None 代码：val joinThem = age.leftOuterJoin(gender) 1 2 3 Emma 23 None Alice 18 Some(Female) James 32 None Neil 25 Some(Male) Cherry 30 Some(Female) 可以注意到，在结果中左边RDD中的key和value依然是字符串或者整形，而原来在参数表中的值却变成了Some对象或者None对象。 为什么使用Some？Some和None都是Option的子类，它们都是泛型的。在联结过程中，参数表中可能并不存在对象中的所有key，对于不存在的key，如果是直接处理，我们会返回一个null，当处理数据时，我们就需要先判断返回值是否是null，在进行下一步处理。而且稍不注意就会在运行时报出NullPointerException。使用Some，首先告诉开发者，这个值有可能无法返回，然后在处理时，我们可以用一个简单的模式匹配完成处理。假设是对上表中的年龄做处理： 1234ageValue match &#123; case Some(age) =&gt; age.toInt case None =&gt; &#123;处理年龄值缺失的情况&#125;&#125; 3 rightOuterJoin 定义：rightOuterJoin[W](other: RDD[(K, W)]): RDD[(K, (Option[V], W))]Perform a right outer join of this and other. rightOuterJoin与leftOuterJoin基本一致，区别在于它的结果保留的是参数other这个RDD中所有的key。 代码：val joinThem = gender.rightOuterJoin(age) 1 2 3 Emma None 23 Alice Some(Female) 18 James None 32 Neil Some(Male) 25 Cherry Some(Female) 30 代码：val joinThem = age.rightOuterJoin(gender) 1 2 3 Harry None Male Alice Some(18) Female Neil Some(25) Male Cherry Some(30) Female Kobe None Male 4 fullOuterJoin 定义：fullOuterJoin[W](other: RDD[(K, W)]): RDD[(K, (Option[V], Option[W]))]Perform a full outer join of this and other. fullOuterJoin会保留两个RDD中所有的key，因此所有的值列都有可能出现缺失的情况，所有的值列都会转为Some对象。 代码：val joinThem = gender.fullOuterJoin(age) 1 2 3 Harry Some(Male) None Emma None Some(23) Alice Some(Female) Some(18) James None Some(32) Neil Some(Male) Some(25) Cherry Some(Female) Some(30) Kobe Some(Male) None 代码：val joinThem = age.fullOuterJoin(gender) 1 2 3 Harry None Some(Male) Emma Some(23) None Alice Some(18) Some(Female) James Some(32) None Neil Some(25) Some(Male) Cherry Some(30) Some(Female) Kobe None Some(Male) 总结spark中实现了以上4种join操作，基本可以为特征处理时所需的大部分情况提供支持，目前只支持两个RDD的联结，如需多个联结可调用多次。还想了解更多的细节，可以查看以上四种join的源码github地址]]></content>
+      <categories>
+        <category>Spark</category>
+      </categories>
+      <tags>
+        <tag>join</tag>
+        <tag>spark</tag>
+        <tag>特征工程</tag>
+        <tag>特征提取</tag>
+        <tag>sql</tag>
+        <tag>pairRDD</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title><![CDATA[Sublime Text 3 配置新的Build System一键编译并运行JAVA on Windows]]></title>
+    <url>%2Fsublime-text-3-run-java-on-windows%2F</url>
+    <content type="text"><![CDATA[工作进行开发时一般工程文件比较大，Eclipse或是Idea一般都打开了大量的文件，这时候想要测试一些小段代码的输出时，在当前的目录新建一个项目或是再打开一个额外的IDE感觉都很麻烦。这种时候我就会选择一个轻量级的编辑器做一些简单的测试，比如广受欢迎的sublime text。 准备工作其实就是装好JDK，并将JAVA_HOME/bin加入到Path变量中，是java的一般配置方式，也就不再赘述。 Sublime Text 3 Build SystemSublime Text 3通过简单的json配置文件即可调用系统中配置好的环境，通过标准输出输出到自己的窗口上，使用非常轻巧方便。但对于java文件，Ctrl-B之后默认的只有javac这一步骤，即只有将java文件编译为class文件，而不会直接输出运行结果。虽然是有点奇怪的默认设定，不过其实修改一下也很方便。 配置开始 Tools -&gt; Build System -&gt; New Build System 将下面的内容贴到文本中12345&#123; "shell_cmd": "javac \"$file_name\" &amp; java \"$file_base_name\"", "file_regex": "^(...*?):([0-9]*):?([0-9]*)", "selector": "source.java"&#125; Preferences -&gt; Browse Packages 找到Sublime Text 3的package目录，打开User文件夹 将上面的文件保存到User文件夹中，取名叫runJava.sublime-build 好了，快来编写一个HelloWorld试试，像是下面这样 12345public class Test&#123; public static void main(String[] args)&#123; System.out.println("Hello, Neil Ron!"); &#125;&#125; Tools -&gt; Build System -&gt; runJava 最后，Ctrl-B，输出~ 总结相比笨重的IDE，这种轻量灵活的方式会广受程序员们的喜爱一点也不奇怪，而且使用这样的方式最方便的是在于多语言的开发，比如本文中测试java的小代码块，同时要写个python或者shell的批处理脚本，使用Sublime Text 3这样的方式就不用开好几个IDE来回切换了。]]></content>
+      <categories>
+        <category>碎片知识</category>
+      </categories>
+      <tags>
+        <tag>java</tag>
+        <tag>windows</tag>
+        <tag>sublime Text</tag>
+        <tag>sublime Text 3</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title><![CDATA[mapreduce工具类——extends configured implements Tool]]></title>
+    <url>%2Fmapreduce-extends-configured-implements-tool%2F</url>
+    <content type="text"><![CDATA[概述Tool接口是mapreduce应用的标准，一个典型的使用方法是使实现的工具类继承Configured类并实现Tool接口。 Tool接口Tool接口继承自Configurable接口，需要实现的方法是int run(String[] args)，用以执行带有指定参数的命令，如 1hadoop jar myMR.jar MyTool -input inputDir -output outputDir myMR.jar是包括有mapreduce程序和其需要的各种依赖的打包文件，MyTool是要运行的主类，接着在mapreduce应用程序中解析input和output两个参数，添加到configuration中作为属性，可在程序中依此将inputDir下的数据经过我们设定的处理后，输出到outputDir下。 Configured类Configured类则继承自Object并实现了Configurable接口，通过继承，可直接使用setConf()和getConf()两个方法来处理带有各个属性的Configuration，而不必重写两个方法。 详见问题继承Configured类的作用 编程模板让我们从hadoop2.6.0文档给出的Tool接口的典型实现开始 工具类基础12345678910111213141516171819202122232425262728293031public class MyApp extends Configured implements Tool &#123; public int run(String[] args) throws Exception &#123; // ToolRunner处理的Configuration Configuration conf = getConf(); // 使用处理过后的conf创建一个JobConf JobConf job = new JobConf(conf, MyApp.class); // 处理自定义的参数，通常有必要的两个参数，输入目录和输出目录 Path in = new Path(args[1]); Path out = new Path(args[2]); // 设置job的一些参数 job.setJobName("my-app"); job.setInputPath(in); job.setOutputPath(out); job.setMapperClass(MyMapper.class); job.setReducerClass(MyReducer.class); // 提交job, 之后等待job完成 JobClient.runJob(job); return 0; &#125; public static void main(String[] args) throws Exception &#123; // 让ToolRunner处理hadoop的命令行参数 int res = ToolRunner.run(new Configuration(), new MyApp(), args); System.exit(res); &#125;&#125; MyApp类拥有main方法，使用hadoop jar命令指定主类之后即可开始运行。Main方法中调用静态方法ToolRunner.run，并给定Configuration，工具类，hadoop jar命令行参数三个参数，将MyApp类的实例作为参数传入，便开始执行run方法内的逻辑。 添加Mapper和Reducer123456789101112131415161718192021222324252627282930313233343536373839404142public class MyApp extends Configured implements Tool &#123; public static class MyMapper extends Mapper&lt;KEYIN,VALUEIN,KEYOUT,VALUEOUT&gt;&#123; // 在此实现每个Mapper的逻辑 protected void setup(org.apache.hadoop.mapreduce.Mapper.Context context)&#123; // 在mapper启动时执行一次 &#125; protected void map(KEYIN key, VALUEIN value, org.apache.hadoop.mapreduce.Mapper.Context context)&#123; // 每个mapper的主逻辑 &#125; protected void cleanup(org.apache.hadoop.mapreduce.Mapper.Context context)&#123; // 在mapper结束时执行一次 &#125; &#125; public static class MyReducer extends Reducer&lt;KEYIN,VALUEIN,KEYOUT,VALUEOUT&gt;&#123; // 在此实现每个Reducer的逻辑 protected void setup(org.apache.hadoop.mapreduce.Reducer.Context context)&#123; // 在reducer启动时执行一次 &#125; protected void reduce(KEYIN key, Iterable&lt;VALUEIN&gt; values, org.apache.hadoop.mapreduce.Reducer.Context context)&#123; // 每个reducer的主逻辑 &#125; protected void cleanup(org.apache.hadoop.mapreduce.Reducer.Context context)&#123; // 在reducer结束时执行一次 &#125; &#125; public int run(String[] args) throws Exception &#123; // 在此编写run方法逻辑 // 设置输入输出 // 设置使用的MyMapper和MyReducer类 &#125; public static void main(String[] args) throws Exception &#123; // 让ToolRunner处理hadoop的命令行参数 int res = ToolRunner.run(new Configuration(), new MyApp(), args); System.exit(res); &#125;&#125; 这样，填入相应逻辑之后，一个java文件即可完成一个完整的mapreduce应用。如有需要，在工具类可实现多个Mapper和Reducer内部类，在run方法中配置多个job，并设置各自的依赖关系，也可在一个java文件中完成多各mapreduce的工作流。]]></content>
+      <categories>
+        <category>Hadoop</category>
+      </categories>
+      <tags>
+        <tag>hadoop</tag>
+        <tag>mapreduce</tag>
+        <tag>configured</tag>
+        <tag>tool</tag>
+        <tag>工具类</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title><![CDATA[相似性的度量]]></title>
+    <url>%2Fsimilarity-distance%2F</url>
+    <content type="text"><![CDATA[协同过滤算法最后要计算用户或商品的相似度，选用何种相似度的度量函数对推荐算法的效果也有着显著的影响。 欧式距离欧氏距离可以用来表示欧几里得空间上两个点的距离，如果x, y是n维空间上的两个点，则两点的距离可以用以下公式表示： $ dist(x,y)=\sqrt{\sum_i^n(x_i^2-y_i^2)} $ $n=2$时，x, y两点的距离就是平面上两点的距离。 余弦相似度余弦公式用于计算两个向量的夹角，两个向量的夹角越小，余弦值越大，表示两者越相似，两个向量的余弦值可用以下公式计算： $T(x,y)=\dfrac{x\cdot y}{\|x\|^2\times\|y\|^2}=\dfrac{\sum x_i y_i}{\sqrt{\sum x_i^2}\sqrt{\sum y_i^2}}$ 最常见的余弦相似度的应用是计算文档的相似度，在吴军博士的《数学之美》中就是以余弦相似度为例介绍新闻的分类。 皮尔逊相关系数皮尔逊相关系数一般用于计算两个向量的相关性，从负相关到不相关到正相关，分布在区间[-1,1]上。 $p(x,y)=\dfrac{\sum x_i y_i - n\overline{xy}}{(n-1)S_x S_y}=\dfrac{n\sum x_i y_i - \sum x_i \sum y_i}{\sqrt{n \sum x_i^2 - (\sum x_i)^2} \sqrt{n \sum y_i^2 - (\sum y_i)^2}}$ Tanimoto系数Tanimoto 系数也称为 Jaccard 系数，是余弦相似度的扩展，也多用于计算文档数据的相似度，其公式如下：$T(x,y)=\dfrac{x \cdot y}{\|x\|^2+\|y\|^2-x \cdot y}=\dfrac{\sum x_i y_i}{\sqrt{\sum x_i^2}+\sqrt{\sum y_i^2-\sum x_i y_i}}$ 参考文献 相似性度量–Pearson相关系数]]></content>
+      <categories>
+        <category>数据挖掘</category>
+      </categories>
+      <tags>
+        <tag>协同过滤</tag>
+        <tag>余弦</tag>
+        <tag>cosine</tag>
+        <tag>pearson</tag>
+        <tag>Tanimoto</tag>
+        <tag>相似性</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title><![CDATA[协同过滤复习笔记]]></title>
+    <url>%2Fcollaborative-filter%2F</url>
+    <content type="text"><![CDATA[本文是学习IBM developerWorks上的文章的笔记：探索推荐引擎内部的秘密，第 2 部分: 深入推荐引擎相关算法 - 协同过滤 协同过滤(Collaborative Filtering, CF)我认为有些像KNN在推荐系统上的一种应用，一般来说可以分为基于用户的协同过滤和基于商品的协同过滤，基于用户的CF是根据用户对商品的喜好计算用户之间的相似度，然后按相似的用户的喜好推荐给用户未接触过的新商品。基于商品的CF计算的则是商品间的相似度，推荐与用户之前偏好商品最相似的商品。 协同过滤大致过程 收集用户偏好 找到相似的用户或物品 推荐相似用户喜欢的，或是相似物品给用户 用户偏好收集对于网站来说，用户对商品会有显性的偏好，如电影的评分，对物品的投票，也会有一些隐性的偏好，比如点击，页面停留的时间，购买等行为。将用户的所有这些行为做统计之后，在经过一定的预处理，即转变为了接下来要用的特征矩阵。 用户不同方式得出的特征可以分开使用，比如类似于当当网或者 Amazon 给出的“购买了该图书的人还购买了 …”，“查看了图书的人还查看了 …”；也可以加权之后得到商品总体的偏好程度，但针对不同问题不同需求，需要注意各个行为的权重分布。 相似性的度量 欧几里得距离，越小则相似度越高。 皮尔逊相关系数， 衡量两个定距变量间联系的紧密程度，在区间[-1,+1]上，越接近+1则越相似 余弦相似度，多用于计算文档数据的相似度，角度越小则越相似。 Tanimoto系数， 余弦相似度的改良版本，角度越小则越相似。 四种相似性度量的详细解释请点击：相似性的度量 相似邻居的计算 KNN，固定样本个数选择最近邻，见图A Threshold-based，固定距离的上限选择范围内的最近邻，见图B 推荐（两种推荐使用的是相同的数据） 基于用户相似度的推荐基于用户之间的相似度，推荐最相似的人感兴趣的商品。 基于商品相似度的推荐基于商品之间的相似度，来推荐最相似的商品。 以上两者的比较1 计算复杂度。对于用户数量大大超过商品数量的网站，比如电商，电影，音乐网站等，Item CF的计算量较小，同时不必频繁更新。而对于微博、新闻、博客等系统，用户的数量相对固定，而推荐的商品是海量并且频繁更新的，这时从计算的角度讲，User CF更合适。2 另外一点，在非社交类型的网站中，使用“某某与你有相同的兴趣，因此推荐了他喜欢的**”，对用户的解释性不强，而相对的，如果是社交属性的网站，用User CF则具有很强的解释性。3 推荐的多样性。对于单一用户来说，User CF因为选了多个相似的用户喜欢的，所以推荐的商品的类别会比较多，而Item CF只是推荐和以前看过最相似的东西，相对会比较单调。对于整个系统来说，要考虑推荐的覆盖率（coverage），User CF考察用户的相似度，所以会更倾向于推荐一些热门物品（最多用户接触），而Item CF因为来自于物品间的相似性，所以更容易推荐长尾中的商品。4 对于用户的适应性。用户是接受推荐的终端，用户的接受程度才是衡量推荐系统的最重要标准。对于User CF，如果一个用户他没有兴趣相似的朋友，那么系统找到的邻居其实并不是那么符合用户的兴趣，这样推荐的效果就会很差。对于Item CF，如果一个用户本身就对看过的商品不再感兴趣，他就不满足Item CF的基本假设，推荐的效果自然也会很差。 这里有一条分割线 下面引用原文中的一个例子来说明， 如果你对推荐的多样性还心存疑惑，那么下面我们再举个实例看看 User CF 和 Item CF 的多样性到底有什么差别。首先，假设每个用户兴趣爱好都是广泛的，喜欢好几个领域的东西，不过每个用户肯定也有一个主要的领域，对这个领域会比其他领域更加关心。给定一个用户，假设他喜欢 3 个领域 A,B,C，A 是他喜欢的主要领域，这个时候我们来看 User CF 和 Item CF 倾向于做出什么推荐：如果用 User CF, 它会将 A,B,C 三个领域中比较热门的东西推荐给用户；而如果用 ItemCF，它会基本上只推荐 A 领域的东西给用户。所以我们看到因为 User CF 只推荐热门的，所以它在推荐长尾里项目方面的能力不足；而 Item CF 只推荐 A 领域给用户，这样他有限的推荐列表中就可能包含了一定数量的不热门的长尾物品，同时 Item CF 的推荐对这个用户而言，显然多样性不足。但是对整个系统而言，因为不同的用户的主要兴趣点不同，所以系统的覆盖率会比较好。 从上面的分析，可以很清晰的看到，这两种推荐都有其合理性，但都不是最好的选择，因此他们的精度也会有损失。其实对这类系统的最好选择是，如果系统给这个用户推荐 30 个物品，既不是每个领域挑选 10 个最热门的给他，也不是推荐 30 个 A 领域的给他，而是比如推荐 15 个 A 领域的给他，剩下的 15 个从 B,C 中选择。所以结合 User CF 和 Item CF 是最优的选择，结合的基本原则就是当采用 Item CF 导致系统对个人推荐的多样性不足时，我们通过加入 User CF 增加个人推荐的多样性，从而提高精度，而当因为采用 User CF 而使系统的整体多样性不足时，我们可以通过加入 Item CF 增加整体的多样性，同样同样可以提高推荐的精度。 参考文献地址 IBM developerWorks：探索搜索引擎内部的秘密，第2部分]]></content>
+      <categories>
+        <category>数据挖掘</category>
+      </categories>
+      <tags>
+        <tag>Collaborative Filter</tag>
+        <tag>协同过滤</tag>
+        <tag>CF</tag>
+        <tag>推荐系统</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title><![CDATA[在DigitalOcean租用一台VPS]]></title>
+    <url>%2Frent-a-vps-on-digitalocean%2F</url>
+    <content type="text"><![CDATA[原文链接：http://www.neilron.xyz/rent-a-vps-on-digitalocean/ VPS相当于一台远程的服务器，尤其是一台在美国的服务器，可以做很多事，比如说建立一个个人网站，部署一个SS服务等等。这里推荐DigitalOcean，提供的服务便捷，同时也有很不错的稳定性和速度，最关键是非常便宜，最低的月消费只要5刀，提供1 CPU, 512M内存, 20GB硬盘, 1000GB流量，尤其这个流量对于个人服务来说几乎是无限的，配置对一般常见的应用也都完全够用。 1 注册DO账号 2 创建Droplet 3 搭建一些基础服务 1 注册DO账号注册账号这么简单的事为什么要单独分一个章节呢，因为要做一个利益声明：您使用我的DO参考链接REFERRAL LINK注册可以获得初始的奖励10刀，如果你使用这个账号消费达到25刀之后，我也可以获得25刀的奖励，如果您这样做了我会非常感谢，实在不喜请直接使用DO的主地址。注册完成之后需要验证一个paypal账户或者信用卡进行5刀的支付，就可以开始创建VPS了。 2 创建Droplet首先，创建Droplet的页面上使用了来自国内无法访问的一些站点的脚本，所以我们需要找一个临时的服务来帮助我们看到完整的页面。搜索了一下，推荐极客VPN的免费试用，免费服务器地址在他们的页面上直接给出了，注册的用户名密码就是VPN的用户名密码，简单直接，比一些联系客服之类的要方便不少。 创建Droplet要填的信息主要有6个部分， Host的名字可以随便指定。 Droplet的配置如果你不知道选择什么的话，选择最低配置就可以。 Droplet的区域最多人推荐旧金山，也有推荐纽约的，我用的是旧金山的，确实快速稳定。 镜像和软件选择自己最习惯的就好，如果没有习惯的，推荐Ubuntu，并选择长期支持版LTS，资料最多最稳定，笔者选择的是目前为止最新的LTS版本14.04。 其它服务按需选择，注意其中备份服务要加额外的20%费用。 使用SSH key是一个更安全的登录方式，在互联网上使用账户和密码，甚至是root账户来登录的安全性堪忧，如果不明白这是什么，后面在VPS中再设定也是一样的，操作也很方便。完成创建。 3 搭建一些基础服务完成了Droplet的创建之后，可以在网站上用console access连接服务器，这样会建立一个VNC连接，或者也可以使用SSH进行远程，windows上的SSH软件推荐putty。就可以开始在服务器上搭建一些常用的服务了，比如一个私人的pptp服务，ss服务on Github，如果不是专业前端的话选择一个博客平台等等，还有更多，开始更多更多的折腾吧。]]></content>
+      <categories>
+        <category>综合</category>
+      </categories>
+      <tags>
+        <tag>VPS</tag>
+        <tag>DigitalOcean</tag>
+        <tag>DO</tag>
+        <tag>Ubuntu</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title><![CDATA[写在三方即将签约之前]]></title>
+    <url>%2Fchoose-offer%2F</url>
+    <content type="text"><![CDATA[手里有几个基本相当的offer，主要是在网易互联网部门的数据挖掘，华为的大数据开发和蘑菇街的机器学习之间做选择，纠结了很长一段时间，想了一些优势劣势。 关于华为华为是一个超大的国际化平台，但在大数据和云上我觉得应当属于追赶者，不说国际上的Azure和Amazon EC2，即使在国内相比阿里云也是起步和进度稍落后。在华为手机的成功营销中，华为树立了一个只要华为认定想做一个东西，就一定能做好的形象，我也是受此影响，对华为的云战略也比较有信心。另外，华为的offer是唯一一个偏平台开发的工作，目前云计算与大数据概念火热，发展的速度也相应极快，API的设计发展向着使非数据挖掘的开发人员也可以更为轻松地使用的方向前进。未来在某些算法选择趋于成熟，更重视特征工程的领域，有多年经验的工程师不一定就能筑起足够高的技术壁垒，那时更为朝气蓬勃的应届生涌进行业内，老人的地位可能相当尴尬，而平台开发的岗位对于想要在技术上走更远的规划可能更为有利。这基本上是华为offer的优势，华为的缺陷也很明显，传闻加班严重，令人生厌的奋斗者协议等等。 关于网易网易是在我接触的圈子里算是一家评价很好的公司，加班的传闻不像华为那么夸张，比较有人情味，有着不错的福利，超赞的食堂。网易的岗位是互联网部门的数据挖掘，因为具体部门未定，前景也没有办法具体的分析，但目前，网易的互联网产品处在一个比较尴尬的时期，网易云音乐算是目前的王牌产品，但是也处于不盈利的状态，目前投入和曝光比较多的新产品是考拉，网易以直营模式的海淘切入电商领域，HR表示这个部门的节奏还是相当快的。感觉数据挖掘用户关系这样的事，与业务比较相关，想要有个人的绩效，部门的整体的业绩就比较重要。另外跟上面说的一样，可能技术积累相对稍难一些。 关于蘑菇街蘑菇街是最早拿到的offer，不过最近才知道大概是在搜索组，经过了很长的时间，在大公司和小公司之间，自己的天平已经偏向先去一个比较大的平台。 一开始打算去华为的，杭研所的情况了解了一些，加班据说没有前几年传闻的那么夸张了，跟一般互联网公司的加班情况大概相差不大，也会有周六加班可以换年假。尽量考虑了自己想要什么，了解了工作的情况，也YY了一些有的没的。 违约开始的契机是网易打来电话要求再次考虑。 当时准备进入华为，正在学习spark和dmlc。而之前学习的重点主要是在算法上，其次是接触各种应用场景，对算法效率的优化不太了解，更别说是平台的优化，内存的优化，通讯量的优化等等。其实选择华为之前我也清楚大数据开发这个岗位和我之前所做所感兴趣的东西不同，但受到“工作之前自己的积累无论如何有限，兴趣也是可以培养的，选择时还是以未来为主”这样观点的影响，也认同这样的观点做出了选择华为的决定。但当实际面对这些不同的时候，心理上的动摇还是比我之前想象得要更大，此时恰逢网易再次发来了邀约。 以上是当时所处的环境，做出违约决定的理由，我大致总结如下： 尽管起薪并不是我主要考虑的因素，但也不得不承认网易杭研给出了比较有竞争力的薪水； 网易确定了部门，在后台技术中心的数据挖掘部门，偏搜索方向，也可能有些推荐系统，这算是之前预期的求职目标之一； 其实是基于兴趣，当有足够的理性因素能够平衡两个选择之后，当然希望兴趣能够加入其中。 对于一直做技术下去自己本来就是有相当的困惑，未来可能想要有机会创业，一开始在技术积累的同时也能学习一些管理，用户需求这样更偏一些业务的领域才能学到的东西，在华为埋头做事对这个长期目标可能不利。 在这一次考虑中，我第一次加入了父母和家庭的因素，网易杭研院的话，我想能有更多时间陪家人。 大致就是这样吧，感觉好像和之前的想法差别还是蛮大的。]]></content>
+      <categories>
+        <category>LIFE</category>
+      </categories>
+      <tags>
+        <tag>offer</tag>
+        <tag>网易</tag>
+        <tag>华为</tag>
+        <tag>求职</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title><![CDATA[Linux复习笔记（二） -- Linux文件系统基本结构和操作]]></title>
+    <url>%2Flinux-bash-getting-started-2%2F</url>
+    <content type="text"><![CDATA[欢迎转载，转载请在醒目处注明出处，Ron’s Blog: http://www.neilron.xyz/linux-bash-getting-started-2/ 更详细内容请查看视频教程地址：http://study.163.com/course/courseLearn.htm?courseId=232007#/learn/video?lessonId=340052&amp;courseId=232007 Linux是一个单根的树状结构,根目录为”/“,文件系统大小写敏感,使用”/“分割. 基本操作每一个shell有一个当前工作目录. pwd: 显示当前工作目录. touch: 创建一个空文件, 或更新已有文件的时间.以”.”开头的文件为隐藏文件. 关于ls ls -a: 显示所有文件,包括隐藏文件 ls -l: 列出详细信息 ls -R: 递归地显示目录当中的内容和所有子目录的内容 ls -ld: 显示链接和目录的信息 复制、移动和删除 file: 查看文件的类型 复制: cp 源文件(文件夹) 目标文件(文件夹) -r 递归地复制文件夹 -v 显示详细信息，文件夹比较大的时候可以用 移动: mv, 使用方式与cp相似可以指定文件名完成移动并重命名 删除: rm 需要删除的文件 -r 递归地删除文件夹 -i 交互式，每次删除一个文件时提示 -f 强制删除，会覆盖-i参数 创建和删除目录 mkdir: 创建一个目录 rmdir: 只能删除空文件夹]]></content>
+      <categories>
+        <category>Linux</category>
+      </categories>
+      <tags>
+        <tag>linux</tag>
+        <tag>bash</tag>
+        <tag>网易云课堂</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title><![CDATA[Linux复习笔记（一） -- Bash的基本操作]]></title>
+    <url>%2Flinux-bash-getting-started-1%2F</url>
+    <content type="text"><![CDATA[欢迎转载，转载请在醒目处注明出处，Ron’s Blog: http://www.neilron.xyz/linux-bash-getting-started-1/ 利用网易云课堂的Linux入门基础课程来复习一些基本操作，有些比较常用，有些平时用到的机会不多或是用的没这么巧妙，在此都做下笔记方便自己以后查阅。 基础命令 hostname: 返回主机名 uname: 显示基本信息 -a == –all etc.. firefox &amp;: ＆的符号表示将任务放到后台去运行 history: 查看全部历史命令 clear: 清除当前的命令窗口的内容 !! : 重复之前一条命令 !u: 重复之前一条以u开头的命令 !num: 重复之前的第num条命令 !?abc: 重复之前含有abc的命令 ctrl+R: 搜索历史记录里的命令 esc之后．: 重复上一次的参数 关于通配符 *: 后面匹配一个或多个字符 ?: 后面只匹配一个字符 [0-9]: 数字范围 [abc]: 字母的表示 [^abc]: 匹配列表之外的字母 关于系统 sudo: 使用管理员权限运行命令 id: 显示当前用户信息 passwd: 修改当前用户的密码 作业管理 在后台运行进程: 命令后面＋&amp; 暂停某个程序: Ctrl + Z 管理后台： jobs 查看所有后台作业 bg: 让后台进程在后台继续运行 fg: 把后台进程拉回到前台]]></content>
+      <categories>
+        <category>Linux</category>
+      </categories>
+      <tags>
+        <tag>linux</tag>
+        <tag>bash</tag>
+        <tag>网易云课堂</tag>
+      </tags>
+  </entry>
+</search>
