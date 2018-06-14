@@ -53,30 +53,6 @@
 
     
   <url>
-    <loc>http://www.neilron.xyz/linux-bash-getting-started-1/</loc>
-    <lastmod>2018-06-14T13:27:38.315Z</lastmod>
-    <data>
-        <display>
-        <title>Linux复习笔记（一） -- Bash的基本操作</title>
-        <pubTime>2015-06-30T16:00:10.000Z</pubTime>
-        
-        <tag>linux</tag>
-         
-        <tag>bash</tag>
-         
-        <tag>网易云课堂</tag>
-         
-         
-           
-             
-              <breadCrumb title="Linux" url="http://www.neilron.xyz/categories/Linux/"/>
-          
-        </display>
-    </data>
-    </url>
-
-    
-  <url>
     <loc>http://www.neilron.xyz/join-in-spark/</loc>
     <lastmod>2018-06-14T13:27:38.315Z</lastmod>
     <data>
@@ -100,6 +76,30 @@
            
              
               <breadCrumb title="Spark" url="http://www.neilron.xyz/categories/Spark/"/>
+          
+        </display>
+    </data>
+    </url>
+
+    
+  <url>
+    <loc>http://www.neilron.xyz/linux-bash-getting-started-1/</loc>
+    <lastmod>2018-06-14T13:27:38.315Z</lastmod>
+    <data>
+        <display>
+        <title>Linux复习笔记（一） -- Bash的基本操作</title>
+        <pubTime>2015-06-30T16:00:10.000Z</pubTime>
+        
+        <tag>linux</tag>
+         
+        <tag>bash</tag>
+         
+        <tag>网易云课堂</tag>
+         
+         
+           
+             
+              <breadCrumb title="Linux" url="http://www.neilron.xyz/categories/Linux/"/>
           
         </display>
     </data>
