@@ -53,6 +53,30 @@
 
     
   <url>
+    <loc>http://www.neilron.xyz/linux-bash-getting-started-1/</loc>
+    <lastmod>2018-06-14T13:27:38.315Z</lastmod>
+    <data>
+        <display>
+        <title>Linux复习笔记（一） -- Bash的基本操作</title>
+        <pubTime>2015-06-30T16:00:10.000Z</pubTime>
+        
+        <tag>linux</tag>
+         
+        <tag>bash</tag>
+         
+        <tag>网易云课堂</tag>
+         
+         
+           
+             
+              <breadCrumb title="Linux" url="http://www.neilron.xyz/categories/Linux/"/>
+          
+        </display>
+    </data>
+    </url>
+
+    
+  <url>
     <loc>http://www.neilron.xyz/join-in-spark/</loc>
     <lastmod>2018-06-14T13:27:38.315Z</lastmod>
     <data>
@@ -76,30 +100,6 @@
            
              
               <breadCrumb title="Spark" url="http://www.neilron.xyz/categories/Spark/"/>
-          
-        </display>
-    </data>
-    </url>
-
-    
-  <url>
-    <loc>http://www.neilron.xyz/linux-bash-getting-started-1/</loc>
-    <lastmod>2018-06-14T13:27:38.315Z</lastmod>
-    <data>
-        <display>
-        <title>Linux复习笔记（一） -- Bash的基本操作</title>
-        <pubTime>2015-06-30T16:00:10.000Z</pubTime>
-        
-        <tag>linux</tag>
-         
-        <tag>bash</tag>
-         
-        <tag>网易云课堂</tag>
-         
-         
-           
-             
-              <breadCrumb title="Linux" url="http://www.neilron.xyz/categories/Linux/"/>
           
         </display>
     </data>
@@ -211,6 +211,30 @@
 
     
   <url>
+    <loc>http://www.neilron.xyz/spark-ml-feature-scaler/</loc>
+    <lastmod>2018-06-14T13:27:38.315Z</lastmod>
+    <data>
+        <display>
+        <title>Spark ML包中的几种归一化方法总结</title>
+        <pubTime>2017-07-17T16:10:42.000Z</pubTime>
+        
+        <tag>spark</tag>
+         
+        <tag>归一化</tag>
+         
+        <tag>ml</tag>
+         
+         
+           
+             
+              <breadCrumb title="Spark" url="http://www.neilron.xyz/categories/Spark/"/>
+          
+        </display>
+    </data>
+    </url>
+
+    
+  <url>
     <loc>http://www.neilron.xyz/stop-docker-series/</loc>
     <lastmod>2018-06-14T13:27:38.315Z</lastmod>
     <data>
@@ -236,30 +260,6 @@
            
              
               <breadCrumb title="DeepLearning" url="http://www.neilron.xyz/categories/DeepLearning/"/>
-          
-        </display>
-    </data>
-    </url>
-
-    
-  <url>
-    <loc>http://www.neilron.xyz/spark-ml-feature-scaler/</loc>
-    <lastmod>2018-06-14T13:27:38.315Z</lastmod>
-    <data>
-        <display>
-        <title>Spark ML包中的几种归一化方法总结</title>
-        <pubTime>2017-07-17T16:10:42.000Z</pubTime>
-        
-        <tag>spark</tag>
-         
-        <tag>归一化</tag>
-         
-        <tag>ml</tag>
-         
-         
-           
-             
-              <breadCrumb title="Spark" url="http://www.neilron.xyz/categories/Spark/"/>
           
         </display>
     </data>
