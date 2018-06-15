@@ -1,0 +1,1446 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=6.3.0" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=6.3.0">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=6.3.0">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=6.3.0">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=6.3.0" color="#222">
+
+
+
+
+
+
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    version: '6.3.0',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":true,"onmobile":false},
+    fancybox: true,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  <meta name="description" content="原文地址：http://www.neilron.xyz/hexo-blog-source-code-management/，转载请注明！ Hexo是一个快速，简单而又强大的博客框架，我们可以使用markdown语言写作文章，hexo就可以在几秒内结合主题生成静态的网页文件。hexo搭建和配置的文章很多，这里就不再赘述了，接下来 接下来我们会做什么 使用Git管理自己的文章和配置文件 使用Git子模">
+<meta name="keywords" content="hexo,git,submodule,主题,子模块">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Hexo静态博客的文章源码和主题代码管理">
+<meta property="og:url" content="http://www.neilron.xyz/hexo-blog-source-code-management/index.html">
+<meta property="og:site_name" content="Ron&#39;s Blog">
+<meta property="og:description" content="原文地址：http://www.neilron.xyz/hexo-blog-source-code-management/，转载请注明！ Hexo是一个快速，简单而又强大的博客框架，我们可以使用markdown语言写作文章，hexo就可以在几秒内结合主题生成静态的网页文件。hexo搭建和配置的文章很多，这里就不再赘述了，接下来 接下来我们会做什么 使用Git管理自己的文章和配置文件 使用Git子模">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="http://upload-images.jianshu.io/upload_images/6677464-52ac8e89c52eecff.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:updated_time" content="2018-06-15T13:43:56.053Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Hexo静态博客的文章源码和主题代码管理">
+<meta name="twitter:description" content="原文地址：http://www.neilron.xyz/hexo-blog-source-code-management/，转载请注明！ Hexo是一个快速，简单而又强大的博客框架，我们可以使用markdown语言写作文章，hexo就可以在几秒内结合主题生成静态的网页文件。hexo搭建和配置的文章很多，这里就不再赘述了，接下来 接下来我们会做什么 使用Git管理自己的文章和配置文件 使用Git子模">
+<meta name="twitter:image" content="http://upload-images.jianshu.io/upload_images/6677464-52ac8e89c52eecff.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+
+
+
+
+
+
+  <link rel="canonical" href="http://www.neilron.xyz/hexo-blog-source-code-management/"/>
+
+
+
+<script type="text/javascript" id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>Hexo静态博客的文章源码和主题代码管理 | Ron's Blog</title>
+  
+
+
+
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?29fa61d21a99beb76e78b601a6028c96";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+  <noscript>
+  <style type="text/css">
+    .use-motion .motion-element,
+    .use-motion .brand,
+    .use-motion .menu-item,
+    .sidebar-inner,
+    .use-motion .post-block,
+    .use-motion .pagination,
+    .use-motion .comments,
+    .use-motion .post-header,
+    .use-motion .post-body,
+    .use-motion .collection-title { opacity: initial; }
+
+    .use-motion .logo,
+    .use-motion .site-title,
+    .use-motion .site-subtitle {
+      opacity: initial;
+      top: initial;
+    }
+
+    .use-motion {
+      .logo-line-before i { left: initial; }
+      .logo-line-after i { right: initial; }
+    }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Ron's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+    
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="Toggle navigation bar">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+    <a href="/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-home"></i> <br />Home</a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-categories">
+    <a href="/categories" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-th"></i> <br />Categories</a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+    <a href="/archives" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />Archives</a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-tags">
+    <a href="/tags" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />Tags</a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-about">
+    <a href="/about" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-user"></i> <br />About</a>
+  </li>
+
+      
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />Search</a>
+        </li>
+      
+    </ul>
+  
+
+  
+    
+
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off"
+             placeholder="Searching..." spellcheck="false"
+             type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+  
+
+
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://www.neilron.xyz/hexo-blog-source-code-management/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Neil Ron">
+      <meta itemprop="description" content="众生即前世">
+      <meta itemprop="image" content="http://ww1.sinaimg.cn/large/88b105cdgy1fh3mg3mijvj20e80e8wf5.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Ron's Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">Hexo静态博客的文章源码和主题代码管理
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+
+              
+                
+              
+
+              <time title="Created: 2017-07-22 19:07:26" itemprop="dateCreated datePublished" datetime="2017-07-22T19:07:26+08:00">2017-07-22</time>
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">In</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/综合/" itemprop="url" rel="index"><span itemprop="name">综合</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+              <span class="post-meta-divider">|</span>
+              <span class="post-meta-item-icon">
+                <i class="fa fa-comment-o"></i>
+              </span>
+              
+                <a href="/hexo-blog-source-code-management/#SOHUCS" itemprop="discussionUrl">
+                  <span class="post-meta-item-text">Comments: </span> <span id="changyan_count_unit" class="post-comments-count hc-comment-count" data-xid="hexo-blog-source-code-management/" itemprop="commentsCount"></span>
+                </a>
+              
+            
+          
+
+          
+          
+
+          
+            <span class="post-meta-divider">|</span>
+            <span class="post-meta-item-icon"
+            >
+            <i class="fa fa-eye"></i>
+             Views:  
+            <span class="busuanzi-value" id="busuanzi_value_page_pv" ></span>
+            </span>
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>原文地址：<a href="http://www.neilron.xyz/hexo-blog-source-code-management/">http://www.neilron.xyz/hexo-blog-source-code-management/</a>，转载请注明！</p>
+<p>Hexo是一个快速，简单而又强大的博客框架，我们可以使用markdown语言写作文章，hexo就可以在几秒内结合主题生成静态的网页文件。hexo搭建和配置的文章很多，这里就不再赘述了，接下来</p>
+<h3 id="接下来我们会做什么"><a href="#接下来我们会做什么" class="headerlink" title="接下来我们会做什么"></a>接下来我们会做什么</h3><ul>
+<li>使用Git管理自己的文章和配置文件</li>
+<li>使用Git子模块功能配置和更新hexo主题</li>
+</ul>
+<h3 id="1-管理文章"><a href="#1-管理文章" class="headerlink" title="1 管理文章"></a>1 管理文章</h3><p>使用Git来管理自己的文件也有很多的教程，这里简单介绍如何以自己的私人云主机为目标，建立远端仓库，方便后续子模块管理hexo主题的描述。</p>
+<h4 id="1-1-初始化目录"><a href="#1-1-初始化目录" class="headerlink" title="1.1 初始化目录"></a>1.1 初始化目录</h4><p>完成了hexo init之后，我们的目录下就有了一个默认的.gitignore文件，已经将自动生成的文件和node模块排除，直接进行<code>git init</code>，下面假定目录名为hexo_blog。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ git init</span><br></pre></td></tr></table></figure></p>
+<h4 id="1-2-第一次提交"><a href="#1-2-第一次提交" class="headerlink" title="1.2 第一次提交"></a>1.2 第一次提交</h4><p>完成第一次提交，因为.gitignore文件已经自动配好，所以只需要下面的代码。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ git add .</span><br><span class="line">$ git commit -m &quot;first commit.&quot;</span><br></pre></td></tr></table></figure></p>
+<h4 id="1-3-建立远程仓库"><a href="#1-3-建立远程仓库" class="headerlink" title="1.3 建立远程仓库"></a>1.3 建立远程仓库</h4><p>一个可以只需要接受<code>push</code>的仓库，不需要工作目录，通常使用Git的裸目录作为团队协作的一个管理中心，在本地先创建一个裸仓库。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ git clone --bare . ../hexo_blog.git</span><br></pre></td></tr></table></figure></p>
+<p>使用scp，ftp或者其它任何方法将这个裸库放到云主机上，放到用户Home目录(~/repos/hexo_blog.git)之后可以比较方便。</p>
+<h4 id="1-4-增加remote"><a href="#1-4-增加remote" class="headerlink" title="1.4 增加remote"></a>1.4 增加remote</h4><p>回到本地的hexo_blog目录，我们先来配置一下ssh和相应的config文件，然后设置origin的branch和本地branch之间的关联关系。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ git remote add origin yun:repos/hexo_blog.git</span><br><span class="line">$ git branch --set-upstream master origin/master</span><br></pre></td></tr></table></figure></p>
+<p>冒号之后是ssh登录后的仓库所在的相对路径。</p>
+<h4 id="1-5-END"><a href="#1-5-END" class="headerlink" title="1.5 END"></a>1.5 END</h4><p>测试一下，完成。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ git pull</span><br><span class="line">Already up-to-date.</span><br></pre></td></tr></table></figure></p>
+<h3 id="2-使用子模块管理hexo主题"><a href="#2-使用子模块管理hexo主题" class="headerlink" title="2 使用子模块管理hexo主题"></a>2 使用子模块管理hexo主题</h3><p>通常我们会需要对主题做一些修改，配置文件的修改，源码的修改，比如最近多说挂掉之后，如果你的域名恰巧已有备案，那么畅言就是一个不错的选择，但是著名的hexo主题<a href="https://github.com/iissnan/hexo-theme-next" target="_blank" rel="noopener">Next</a>目前还没有支持畅言，这就需要我们自己进行一些修改（目前已支持，文档尚未更新）。</p>
+<p>如果直接<code>clone</code>仓库中的代码，就很难维护我们自己对主题做的修改，而直接复制主题的源码，又不能够跟踪主库中后续的更新。Git中有一个功能叫做子模块，正适合于我们主题源码的维护，一方面可以继续从主代码库获取更新，一方面也可以维护自己开发的代码。</p>
+<p>下面以Next为例，说明一下配置过程。</p>
+<h4 id="2-1-FORK代码"><a href="#2-1-FORK代码" class="headerlink" title="2.1 FORK代码"></a>2.1 FORK代码</h4><p>首先<code>fork</code>一份代码到我们自己的仓库。<br>如下图所示，</p>
+<p><img src="http://upload-images.jianshu.io/upload_images/6677464-52ac8e89c52eecff.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt=""></p>
+<h4 id="2-2-从fork出来的仓库初始化本地子模块"><a href="#2-2-从fork出来的仓库初始化本地子模块" class="headerlink" title="2.2 从fork出来的仓库初始化本地子模块"></a>2.2 从<code>fork</code>出来的仓库初始化本地子模块</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ git submodule add https://github.com/YourName/hexo-theme-next.git themes/next</span><br></pre></td></tr></table></figure>
+<p>这里参考了<a href="http://luyi13.github.io/2016/03/12/hexo-git/" target="_blank" rel="noopener">Hexo博客环境同步和Git子模块</a>的建议，运行了<code>git checkout master</code>，不过在我机器上似乎初始化下来的仓库已经在master分支上了，既然可能有这个问题，可以check一下，或者执行一下这条命令。</p>
+<h4 id="2-3-上传本地修改"><a href="#2-3-上传本地修改" class="headerlink" title="2.3 上传本地修改"></a>2.3 上传本地修改</h4><p>进入主题目录，按照自己站点的要求修改完成主题的配置文件。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">$ cd themes/next</span><br><span class="line">$ git add .</span><br><span class="line">$ git commit -m &quot;first modift config file.&quot;</span><br><span class="line">$ git push</span><br></pre></td></tr></table></figure>
+<p>子模块相当于一个独立的git目录，上面的操作将本次对配置文件的修改推送到了第一步fork的仓库中。<br>ps: 因为采用了这种方式管理主题文件，配置文件就变成了开源在github上，一定要注意<strong>不要</strong>把自己的个人信息等写在主题的配置文件里。</p>
+<h4 id="2-4-同步主题的更新"><a href="#2-4-同步主题的更新" class="headerlink" title="2.4 同步主题的更新"></a>2.4 同步主题的更新</h4><p>我们需要给本地仓库增加一个新的上游，取名叫upstream，并从这里拉取更新。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ git remote set-url upstream https://github.com/iissnan/hexo-theme-next.git</span><br><span class="line">$ git pull upstream master</span><br></pre></td></tr></table></figure></p>
+<p>没有冲突自动合并完就可以push到自己Fork的仓库了，有冲突的话需要查看并完成冲突处理，然后push到自己的仓库。</p>
+<h4 id="2-5-END"><a href="#2-5-END" class="headerlink" title="2.5 END"></a>2.5 END</h4><p>这样就完成了主题代码的维护，总结一下，就是remote origin维护本地的代码，upstream拉取更新并合并到本地。</p>
+<h3 id="3-自动部署更新"><a href="#3-自动部署更新" class="headerlink" title="3 自动部署更新"></a>3 自动部署更新</h3><p>Hexo自带有部署功能，使用<code>hexo d</code>。最常使用的还是Git方式的部署，实现的方式上就是将生成的HTML当做源码推送到远端仓库中。</p>
+<h4 id="3-1-初始化html的远端仓库"><a href="#3-1-初始化html的远端仓库" class="headerlink" title="3.1 初始化html的远端仓库"></a>3.1 初始化html的远端仓库</h4><p>还是选择在源码的隔壁，配置一个html文件的远端仓库。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">$ cd ~</span><br><span class="line">$ mkdir hexo_blog_site.git</span><br><span class="line">$ cd hexo_blog_site.git</span><br><span class="line">$ git init --bare</span><br></pre></td></tr></table></figure></p>
+<h4 id="3-2-安装插件和配置hexo站点配置文件"><a href="#3-2-安装插件和配置hexo站点配置文件" class="headerlink" title="3.2 安装插件和配置hexo站点配置文件"></a>3.2 安装插件和配置hexo站点配置文件</h4><p>Git部署方式需要安装一个hexo插件<a href="https://github.com/hexojs/hexo-deployer-git" target="_blank" rel="noopener">hexo-deployer-git</a><br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ npm install hexo-deployer-git --save</span><br></pre></td></tr></table></figure></p>
+<p>添加站点配置文件<code>_config.yml</code><br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">deploy:</span><br><span class="line">  type: git</span><br><span class="line">  repo: yun:repos/hexo_blog_site.git</span><br><span class="line">  branch: master</span><br></pre></td></tr></table></figure></p>
+<h4 id="3-3-配置git钩子"><a href="#3-3-配置git钩子" class="headerlink" title="3.3 配置git钩子"></a>3.3 配置git钩子</h4><p>如果需要，<a href="https://git-scm.com/book/zh/v2/%E8%87%AA%E5%AE%9A%E4%B9%89-Git-Git-%E9%92%A9%E5%AD%90" target="_blank" rel="noopener">钩子是什么？</a></p>
+<p>我们需要的是在接受到push请求之后执行一个操作，将目前的工作版本checkout出来，复制到指定的目录下，需要配置的对应的钩子文件是post-receive。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">#!/bin/sh</span><br><span class="line">rm -r /var/www/blog.neilron.xyz/*</span><br><span class="line">git --work-tree=/var/www/blog.neilron.xyz --git-dir=/home/neil/repos/ron_blog_site.git checkout -f</span><br></pre></td></tr></table></figure></p>
+<h4 id="3-4-END"><a href="#3-4-END" class="headerlink" title="3.4 END"></a>3.4 END</h4><p>测试一下钩子是否能正常运行，可能有目标文件夹的权限等问题，使用nginx或其它服务器软件伺服根目录下的index.html等这些问题就不在这里赘述了，本文主要是想总结下关于源代码管理的一些事项。</p>
+<h3 id="4-在新环境完成配置"><a href="#4-在新环境完成配置" class="headerlink" title="4 在新环境完成配置"></a>4 在新环境完成配置</h3><p>当来到一个新的机器，当然<code>Node.js</code> 和 <code>Git</code>两个工具是必不可少的。之后首先完成代码的clone和子模块适合的初始化。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ git clone yun:repos/hexo_blog.git</span><br><span class="line">$ git submodule init</span><br><span class="line">$ git submodule update</span><br></pre></td></tr></table></figure></p>
+<p>第一次初始化之后，子模块的head可能是游离的，如果直接提交了变更就会带来问题，记得先放到master上，运行<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ cd themes/next</span><br><span class="line">$ git checkout master</span><br></pre></td></tr></table></figure></p>
+<p>代码配置完成之后，执行<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install</span><br></pre></td></tr></table></figure></p>
+<p>就可以完成package.json中所有依赖的安装了，尝试一下<code>hexo -s</code>，新的工作节点上可以编译出一样的静态站点了。</p>
+
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+      <div>
+        <ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>Post author:  </strong>Neil Ron</li>
+  <li class="post-copyright-link">
+    <strong>Post link: </strong>
+    <a href="http://www.neilron.xyz/hexo-blog-source-code-management/" title="Hexo静态博客的文章源码和主题代码管理">http://www.neilron.xyz/hexo-blog-source-code-management/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>Copyright Notice:  </strong>All articles in this blog are licensed under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="external nofollow" target="_blank">CC BY-NC-SA 4.0</a> unless stating additionally.</li>
+</ul>
+
+      </div>
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/hexo/" rel="tag"># hexo</a>
+          
+            <a href="/tags/git/" rel="tag"># git</a>
+          
+            <a href="/tags/submodule/" rel="tag"># submodule</a>
+          
+            <a href="/tags/主题/" rel="tag"># 主题</a>
+          
+            <a href="/tags/子模块/" rel="tag"># 子模块</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/spark-ml-feature-scaler/" rel="next" title="Spark ML包中的几种归一化方法总结">
+                <i class="fa fa-chevron-left"></i> Spark ML包中的几种归一化方法总结
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+  
+    <div class="comments" id="comments">
+      <div id="SOHUCS"></div>
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            Table of Contents
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            Overview
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="http://ww1.sinaimg.cn/large/88b105cdgy1fh3mg3mijvj20e80e8wf5.jpg"
+                alt="Neil Ron" />
+            
+              <p class="site-author-name" itemprop="name">Neil Ron</p>
+              <p class="site-description motion-element" itemprop="description">众生即前世</p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives">
+                
+                    <span class="site-state-item-count">14</span>
+                    <span class="site-state-item-name">posts</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  <a href="/categories/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">10</span>
+                    <span class="site-state-item-name">categories</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  <a href="/tags/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">49</span>
+                    <span class="site-state-item-name">tags</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+            <div class="links-of-author motion-element">
+              
+                <span class="links-of-author-item">
+                  <a href="https://github.com/NeilRon" target="_blank" title="GitHub"><i class="fa fa-fw fa-github"></i>GitHub</a>
+                  
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="mailto:poyan.ron@gmail.com" target="_blank" title="E-Mail"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+                  
+                </span>
+              
+            </div>
+          
+
+          
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#接下来我们会做什么"><span class="nav-text">接下来我们会做什么</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#1-管理文章"><span class="nav-text">1 管理文章</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1-1-初始化目录"><span class="nav-text">1.1 初始化目录</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#1-2-第一次提交"><span class="nav-text">1.2 第一次提交</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#1-3-建立远程仓库"><span class="nav-text">1.3 建立远程仓库</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#1-4-增加remote"><span class="nav-text">1.4 增加remote</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#1-5-END"><span class="nav-text">1.5 END</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-使用子模块管理hexo主题"><span class="nav-text">2 使用子模块管理hexo主题</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#2-1-FORK代码"><span class="nav-text">2.1 FORK代码</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-2-从fork出来的仓库初始化本地子模块"><span class="nav-text">2.2 从fork出来的仓库初始化本地子模块</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-3-上传本地修改"><span class="nav-text">2.3 上传本地修改</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-4-同步主题的更新"><span class="nav-text">2.4 同步主题的更新</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-5-END"><span class="nav-text">2.5 END</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-自动部署更新"><span class="nav-text">3 自动部署更新</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#3-1-初始化html的远端仓库"><span class="nav-text">3.1 初始化html的远端仓库</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-2-安装插件和配置hexo站点配置文件"><span class="nav-text">3.2 安装插件和配置hexo站点配置文件</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-3-配置git钩子"><span class="nav-text">3.3 配置git钩子</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-4-END"><span class="nav-text">3.4 END</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-在新环境完成配置"><span class="nav-text">4 在新环境完成配置</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; 2016 &mdash; <span itemprop="copyrightYear">2018</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Neil Ron</span>
+
+  
+
+  
+</div>
+
+
+
+
+  <div class="powered-by">Powered by <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> v3.7.1</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">Theme &mdash; <a class="theme-link" target="_blank" href="https://github.com/theme-next/hexo-theme-next">NexT.Mist</a> v6.3.0</div>
+
+
+
+
+        
+<div class="busuanzi-count">
+  <script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+  
+    <span class="site-uv" title="Total Visitors">
+      <i class="fa fa-user"></i>
+      <span class="busuanzi-value" id="busuanzi_value_site_uv"></span>
+    </span>
+  
+
+  
+    <span class="site-pv" title="Total Views">
+      <i class="fa fa-eye"></i>
+      <span class="busuanzi-value" id="busuanzi_value_site_pv"></span>
+    </span>
+  
+</div>
+
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+          <span id="scrollpercent"><span>0</span>%</span>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/canvas-nest/canvas-nest.min.js"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=6.3.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=6.3.0"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=6.3.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=6.3.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=6.3.0"></script>
+
+
+
+  
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+  
+    <script type="text/javascript">
+    (function(){
+      var appid = 'cytFjRTiD';
+      var conf = '5786332030c9af2325d5ffccf4c1b06b';
+      var width = window.innerWidth || document.documentElement.clientWidth;
+      if (width < 960) {
+      window.document.write('<script id="changyan_mobile_js" charset="utf-8" type="text/javascript" src="https://changyan.sohu.com/upload/mobile/wap-js/changyan_mobile.js?client_id=' + appid + '&conf=' + conf + '"><\/script>'); } else { var loadJs=function(d,a){var c=document.getElementsByTagName("head")[0]||document.head||document.documentElement;var b=document.createElement("script");b.setAttribute("type","text/javascript");b.setAttribute("charset","UTF-8");b.setAttribute("src",d);if(typeof a==="function"){if(window.attachEvent){b.onreadystatechange=function(){var e=b.readyState;if(e==="loaded"||e==="complete"){b.onreadystatechange=null;a()}}}else{b.onload=a}}c.appendChild(b)};loadJs("https://changyan.sohu.com/upload/changyan.js",function(){
+        window.changyan.api.config({appid:appid,conf:conf})});
+      }
+    })();
+    </script>
+    <script type="text/javascript" src="https://assets.changyan.sohu.com/upload/plugins/plugins.count.js"></script>
+  
+
+
+
+
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+  
+
+  
+    
+      <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        inlineMath: [ ['$','$'], ["\\(","\\)"]  ],
+        processEscapes: true,
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      },
+      TeX: {equationNumbers: { autoNumber: "AMS" }}
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+      var all = MathJax.Hub.getAllJax(), i;
+        for (i=0; i < all.length; i += 1) {
+          all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+<script type="text/javascript" src="//cdn.bootcss.com/mathjax/2.7.1/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+    
+  
+
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
